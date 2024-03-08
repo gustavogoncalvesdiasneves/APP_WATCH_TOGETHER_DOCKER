@@ -6,14 +6,12 @@ const socketIo = require('socket.io');
 const server = http.createServer();
 const io = new socketIo.Server(server, {
     cors: {
-        origin: 'http://127.0.0.1:8080/RAVE/'
-        // origin: 'http://127.0.0.1:3000'
+        // origin: 'http://127.0.0.1:8080/RAVE/'
+        origin: 'http://localhost:3000'
     }
 });
 
 const PORT = process.env.PORT || 3001;
-
-const rooms = {};
 
 io.on('connection', (socket) => {
     console.log('Novo usuário conectado');
@@ -61,8 +59,8 @@ server.listen(PORT, () => {
     console.log(`Servidor Socket.IO rodando na porta ${PORT}`);
 });
 
-// module.exports = io;
-export { io };
+module.exports = io;
+// export { io };
 
 
 

@@ -1,44 +1,19 @@
-// script.js
+const socket = io();
 
-import { io } from "../server/server.js";
+const video = document.getElementById('video');
 
-const socketIo = io();
+socket.on('play', () => {
+    video.play();
+});
 
+socket.on('pause', () => {
+    video.pause();
+});
 
-// Define a classe RoomController que encapsula as funções
-class RoomController {
-    createRoom() {
-        const roomId = document.getElementById('roomId').value;
-        socketIo.emit('createRoom', roomId);
-        console.log("cratedRoom: ")
-    }
+video.addEventListener('play', () => {
+    socket.emit('play');
+});
 
-    joinRoom() {
-        const roomId = document.getElementById('joinRoomId').value;
-        socketIo.emit('joinRoom', roomId);
-        console.log("joinedRoom: ")
-    }
-}
-
-// Instancia um objeto da classe RoomController
-const roomController = new RoomController();
-
-// Adiciona os event listeners após o carregamento do documento
-document.addEventListener('DOMContentLoaded', function() {
-    // Adiciona o event listener createRoom ao botão createRoom
-    document.getElementById("createRoom").addEventListener('click', roomController.createRoom);
-
-    // Adiciona o event listener joinRoom ao botão joinRoom
-    document.getElementById("joinRoom").addEventListener('click', roomController.joinRoom);
-
-    // Evento para sincronizar a reprodução do vídeo
-    document.getElementById('video-player').addEventListener('timeupdate', () => {
-        const currentTime = document.getElementById('video-player').currentTime;
-        socketIo.emit('syncVideo', roomId, currentTime);
-    });
-
-    // Evento para sincronizar a reprodução do vídeo com outros usuários
-    socketIo.on('videoSynced', (currentTime) => {
-        document.getElementById('video-player').currentTime = currentTime;
-    });
+video.addEventListener('pause', () => {
+    socket.emit('pause');
 });

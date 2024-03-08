@@ -1,30 +1,22 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rave Video Player</title>
-    <script type="module" src="../server/server.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Video Sync</title>
+<style>
+    video {
+        width: 100%;
+    }
+</style>
 </head>
 <body>
-    <div id="roomCreation">
-        <input type="text" id="roomId" placeholder="Room ID">
-        <button id="createRoom">Create Room</button>
-    </div>
-
-    <div id="roomJoining">
-        <input type="text" id="joinRoomId" placeholder="Room ID">
-        <button id="joinRoom">Join Room</button>
-    </div>
-
-    <video id="video-player" controls style="width: 100%;">
-        <source src="../example-video.mp4" type="video/mp4" >
-        Seu navegador não suporta o elemento de vídeo.
+    <video id="video" controls>
+        <source src="your_video.mp4" type="video/mp4">
+        Your browser does not support the video tag.
     </video>
 
-    <script src="./script.js" type="module"></script>
-    <!-- <script src="./socket.js" type="module"></script> -->
-    <script src="https://requirejs.org/docs/release/2.3.5/minified/require.js"></script>
+    <script src="https://cdn.socket.io/socket.io-4.0.1.min.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
