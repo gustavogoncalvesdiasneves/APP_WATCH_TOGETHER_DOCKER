@@ -1,49 +1,84 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Socket.IO chat</title>
+<head>
+    <title>Synced Video Player</title>
     <script src="/socket.io/socket.io.js"></script>
-    <style>
-        body { margin: 0; padding-bottom: 3rem; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-  
-        #form { background: rgba(0, 0, 0, 0.15); padding: 0.25rem; position: fixed; bottom: 0; left: 0; right: 0; display: flex; height: 3rem; box-sizing: border-box; backdrop-filter: blur(10px); }
-        #input { border: none; padding: 0 1rem; flex-grow: 1; border-radius: 2rem; margin: 0.25rem; }
-        #input:focus { outline: none; }
-        #form > button { background: #333; border: none; padding: 0 1rem; margin: 0.25rem; border-radius: 3px; outline: none; color: #fff; }
-  
-        #messages { list-style-type: none; margin: 0; padding: 0; }
-        #messages > li { padding: 0.5rem 1rem; }
-        #messages > li:nth-child(odd) { background: #efefef; }
-      </style>
-  </head>
-  <body>
-    <ul id="messages"></ul>
-    <form id="form" action="">
-      <input id="input" autocomplete="off" /><button>Send</button>
-    </form>
+</head>
+<body>
+    <video id="video" controls style="width: 100%;">
+        <source src="/example-video.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
 
     <script>
-      var socket = io();
+        var socket = io();
+        var video = document.getElementById('video');
+        // var clientIdInput = document.getElementById('clientId');
+        var lastSentTime = 0;
 
-      var messages = document.getElementById('messages');
-      var form = document.getElementById('form');
-      var input = document.getElementById('input');
+        // function setClientId() {
+        //     var clientId = clientIdInput.value;
+        //     socket.emit('set client id', clientId);
+        // }
 
-      form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        if (input.value) {
-          socket.emit('chat message', input.value);
-          input.value = '';
+        // video.addEventListener('click', function() {
+        //     if (video.paused) {
+        //         video.play();
+        //     }
+        // });
+
+        // Verificar se o elemento de vídeo foi encontrado no DOM
+        if (video) {
+            // Adicionar ouvintes de evento somente se o elemento de vídeo existir
+            // Enviar mensagem quando o vídeo é reproduzido
+            video.addEventListener('play', function() {
+                console.log('Play event triggered');
+                socket.emit('video sync', { action: 'play', currentTime: video.currentTime});
+            });
+
+            // Enviar mensagem quando o vídeo é pausado
+            video.addEventListener('pause', function() {
+                console.log('Pause event triggered');
+                socket.emit('video sync', { action: 'pause', currentTime: video.currentTime});
+            });
+
+            // Enviar mensagem quando o vídeo é avançado ou retrocedido
+            video.addEventListener('seeked', function() {
+                console.log('Seek event triggered');
+                var currentTime = video.currentTime;
+                if (Math.abs(currentTime - lastSentTime) > 0.5) { // Only send if there's a significant change
+                    console.log('Sending seek message:', currentTime);
+                    socket.emit('video sync', { action: 'seek', currentTime: currentTime});
+                    lastSentTime = currentTime;
+                }
+            });
+
+            // Receber mensagens de sincronização do servidor
+            socket.on('video sync', function(data) {
+                console.log('Received video sync message:', data);
+                // if (data.clientId === clientIdInput.value) {
+                    switch(data.action) {
+                        case 'play':
+                            // Sincronizar a reprodução e a posição de reprodução
+                            console.log('Play action received');
+                            video.currentTime = data.currentTime;
+                            video.play();
+                            break;
+                        case 'pause':
+                            // Sincronizar a pausa e a posição de reprodução
+                            console.log('Pause action received');
+                            video.currentTime = data.currentTime;
+                            video.pause();
+                            break;
+                        case 'seek':
+                            // Sincronizar a posição de reprodução com base na mensagem de busca recebida
+                            console.log('Seek action received');
+                            video.currentTime = data.currentTime;
+                            break;
+                    }
+                // }
+            });
         }
-      });
-
-      socket.on('chat message', function(msg) {
-        console.log('Received message:', msg); // Adicionado para depuração
-        var item = document.createElement('li');
-        item.textContent = msg;
-        messages.appendChild(item);
-        window.scrollTo(0, document.body.scrollHeight);
-      });
     </script>
-  </body>
+</body>
 </html>
