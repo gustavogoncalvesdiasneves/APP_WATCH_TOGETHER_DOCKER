@@ -7,13 +7,8 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// let authorizedClientId = '123456'; // ID autorizado para controlar o vídeo
-
 // Configurando para servir arquivos estáticos
-app.use(express.static(path.join(__dirname, 'public'), {
-    index: false,  // Para evitar que o servidor tente servir automaticamente um arquivo index.html
-}));
-
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Definindo o tipo de conteúdo para arquivos JavaScript
 app.use((req, res, next) => {
@@ -27,20 +22,24 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
 
+// Lista de usuários conectados
+let users = {};
+
 io.on('connection', (socket) => {
-    // let clientId = ''; // Armazenar o ID do cliente atual
+    // Quando um usuário se conecta
+    console.log(`Usuário conectado: ${socket.id}`);
 
-    // socket.on('set client id', (id) => {
-    //     clientId = id; // Definir o ID do cliente atual
-    //     console.log('Client ID set:', clientId);
-    // });
+    // Evento para receber mensagens de chat
+    socket.on('chat message', (msg) => {
+        console.log(`Mensagem recebida de ${socket.id}: ${msg}`);
+        io.emit('chat message', { userId: socket.id, message: msg });
+    });
 
-    socket.on('video sync', (data) => {
-        console.log('Received video sync message:', data);
-        
-        // Repassar a mensagem de sincronização para todos os clientes conectados
-        io.emit('video sync', data);
-        console.log('Forwarded video sync message to all clients');
+    // Quando um usuário desconecta
+    socket.on('disconnect', () => {
+        console.log(`Usuário desconectado: ${socket.id}`);
+        delete users[socket.id];
+        io.emit('user disconnected', { userId: socket.id });
     });
 });
 
