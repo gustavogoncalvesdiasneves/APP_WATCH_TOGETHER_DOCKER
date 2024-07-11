@@ -7,10 +7,10 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Configurando para servir arquivos estáticos
+// Configurar para servir arquivos estáticos
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Definindo o tipo de conteúdo para arquivos JavaScript
+// Definir o tipo de conteúdo para arquivos JavaScript
 app.use((req, res, next) => {
     if (req.url.endsWith('.js')) {
         res.set('Content-Type', 'application/javascript');
@@ -22,24 +22,45 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
 
-// Lista de usuários conectados
-let users = {};
+// Armazenamento temporário de informações da sala
+let rooms = new Map(); // Mapa para armazenar informações das salas
 
 io.on('connection', (socket) => {
-    // Quando um usuário se conecta
-    console.log(`Usuário conectado: ${socket.id}`);
+    console.log('a user connected');
 
-    // Evento para receber mensagens de chat
-    socket.on('chat message', (msg) => {
-        console.log(`Mensagem recebida de ${socket.id}: ${msg}`);
-        io.emit('chat message', { userId: socket.id, message: msg });
+    socket.on('join room', ({ roomId, userName }) => {
+        console.log(`User joined room ${roomId}: ${userName}`);
+        socket.join(roomId);
+        socket.roomId = roomId;
+        socket.userName = userName;
+        if (!rooms.has(roomId)) {
+            rooms.set(roomId, []);
+        }
+        rooms.get(roomId).push({ userId: socket.id, userName: userName });
+        io.to(roomId).emit('user joined', rooms.get(roomId));
     });
 
-    // Quando um usuário desconecta
+    socket.on('chat message', ({ userId, message }) => {
+        console.log(`Message from ${userId}: ${message}`);
+        io.to(socket.roomId).emit('chat message', { userId: userId, userName: socket.userName, message: message });
+    });
+
     socket.on('disconnect', () => {
-        console.log(`Usuário desconectado: ${socket.id}`);
-        delete users[socket.id];
-        io.emit('user disconnected', { userId: socket.id });
+        console.log('user disconnected');
+        if (socket.roomId && rooms.has(socket.roomId)) {
+            rooms.set(socket.roomId, rooms.get(socket.roomId).filter(user => user.userId !== socket.id));
+            io.to(socket.roomId).emit('user left', rooms.get(socket.roomId));
+        }
+    });
+
+    // Event listeners for video synchronization (play, pause, seek)
+    // Implement as needed based on previous setup
+    socket.on('video sync', (data) => {
+        console.log('Received video sync message:', data);
+        
+        // Repassar a mensagem de sincronização para todos os clientes conectados
+        io.emit('video sync', data);
+        console.log('Forwarded video sync message to all clients');
     });
 });
 
