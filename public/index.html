@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rave Video Player</title>
+    <link rel="stylesheet" href="./style.css">
+    <!-- <script type="module" src="../server/server.mjs"></script> -->
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Rave Video Player</h1>
+        </header>
+        <main>
+            <div id="roomCreation" class="room-control">
+                <input type="text" id="roomId" placeholder="Room ID">
+                <button id="createRoom">Create Room</button>
+            </div>
+
+            <div id="roomJoining" class="room-control">
+                <input type="text" id="joinRoomId" placeholder="Room ID">
+                <button id="joinRoom">Join Room</button>
+            </div>
+
+            <video id="video-player" controls style="width: 100%;">
+                <source src="./example-video.mp4" type="video/mp4">
+                Seu navegador não suporta o elemento de vídeo.
+            </video>
+            
+
+            <!-- <video id="video-player" controls>
+                <source src="../example-video.mp4" type="video/mp4">
+                Seu navegador não suporta o elemento de vídeo.
+            </video> -->
+        </main>
+    </div>
+
+    <script src="https://requirejs.org/docs/release/2.3.5/minified/require.js"></script>
+    <script src="./script.js" type="module"></script>
+</body>
+</html>

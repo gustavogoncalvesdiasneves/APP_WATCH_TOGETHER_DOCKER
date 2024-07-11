@@ -2,10 +2,10 @@
   "name": "rave-video-player",
   "version": "1.0.0",
   "description": "",
-  "main": "public/server/server.mjs",
+  "main": "server.mjs",
   "type": "module",
   "scripts": {
-    "start": "node public/server/server.mjs"
+    "start": "node server.mjs"
   },
   "dependencies": {
     "express": "^4.18.3",

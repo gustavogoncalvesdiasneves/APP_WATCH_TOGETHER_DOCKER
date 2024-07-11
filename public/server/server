@@ -1,5 +1,3 @@
-// server.js
-
 const http = require('http');
 const socketIo = require('socket.io');
 
@@ -7,10 +5,8 @@ const server = http.createServer();
 const io = new socketIo.Server(server, {
     cors: {
         origin: 'http://127.0.0.1:8080/RAVE/'
-        // origin: 'http://127.0.0.1:3000'
     }
 });
-
 const PORT = process.env.PORT || 3001;
 
 const rooms = {};
@@ -18,7 +14,6 @@ const rooms = {};
 io.on('connection', (socket) => {
     console.log('Novo usuário conectado');
 
-    // Evento para criar uma nova sala
     socket.on('createRoom', (roomId) => {
         if (!rooms[roomId]) {
             rooms[roomId] = { users: {} };
@@ -28,7 +23,6 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Evento para entrar em uma sala existente
     socket.on('joinRoom', (roomId) => {
         if (rooms[roomId]) {
             socket.join(roomId);
@@ -39,15 +33,12 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Evento para sincronizar a reprodução do vídeo
     socket.on('syncVideo', (roomId, currentTime) => {
         socket.to(roomId).emit('videoSynced', currentTime);
     });
 
-    // Evento para desconectar
     socket.on('disconnect', () => {
         console.log('Usuário desconectado');
-        // Remova o usuário da sala quando ele se desconectar
         for (const roomId in rooms) {
             if (rooms[roomId].users[socket.id]) {
                 delete rooms[roomId].users[socket.id];
@@ -61,8 +52,8 @@ server.listen(PORT, () => {
     console.log(`Servidor Socket.IO rodando na porta ${PORT}`);
 });
 
-// module.exports = io;
-export { io };
+module.exports = { io };
+
 
 
 
