@@ -23,7 +23,6 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
 
-
 // Função para importar vídeo da IPFS através do servidor
 async function importIPFSVideo(ipfsHash) {
     const url = `https://ipfs.infura.io/ipfs/${ipfsHash}`;
@@ -56,7 +55,6 @@ app.get('/ipfs/:hash', async (req, res) => {
     }
 });
 
-
 // Armazenamento temporário de informações da sala
 let rooms = new Map(); // Mapa para armazenar informações das salas
 
@@ -68,11 +66,18 @@ io.on('connection', (socket) => {
         socket.join(roomId);
         socket.roomId = roomId;
         socket.userName = userName;
+
         if (!rooms.has(roomId)) {
-            rooms.set(roomId, []);
+            rooms.set(roomId, { users: [], videoHash: null });
         }
-        rooms.get(roomId).push({ userId: socket.id, userName: userName });
-        io.to(roomId).emit('user joined', rooms.get(roomId));
+        
+        const room = rooms.get(roomId);
+        room.users.push({ userId: socket.id, userName: userName });
+
+        // Envie o vídeo atual da sala para o usuário que acabou de se juntar
+        socket.emit('current video', room.videoHash);
+
+        io.to(roomId).emit('user joined', room.users);
     });
 
     socket.on('chat message', ({ userId, message }) => {
@@ -83,23 +88,24 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         console.log('user disconnected');
         if (socket.roomId && rooms.has(socket.roomId)) {
-            rooms.set(socket.roomId, rooms.get(socket.roomId).filter(user => user.userId !== socket.id));
-            io.to(socket.roomId).emit('user left', rooms.get(socket.roomId));
+            const room = rooms.get(socket.roomId);
+            room.users = room.users.filter(user => user.userId !== socket.id);
+            io.to(socket.roomId).emit('user left', room.users);
         }
     });
 
-    // Event listeners for video synchronization (play, pause, seek)
-    // Implement as needed based on previous setup
     socket.on('video sync', (data) => {
         console.log('Received video sync message:', data);
-        
-        // Repassar a mensagem de sincronização para todos os clientes conectados
-        io.emit('video sync', data);
+        io.to(socket.roomId).emit('video sync', data);
         console.log('Forwarded video sync message to all clients');
     });
 
-    socket.on('video imported', (data) => {
-        socket.to(socket.roomId).emit('video imported', data);
+    socket.on('video imported', ({ roomId, ipfsHash }) => {
+        console.log(`Video imported in room ${roomId}: ${ipfsHash}`);
+        if (rooms.has(roomId)) {
+            rooms.get(roomId).videoHash = ipfsHash;
+        }
+        io.to(roomId).emit('video imported', { ipfsHash });
     });
 });
 

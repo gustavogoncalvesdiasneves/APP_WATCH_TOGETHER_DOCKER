@@ -11,22 +11,63 @@ function importVideo() {
     fileInput.click();
 }
 
-async function importIPFSVideo() {
-    const ipfsHash = 'QmNPHAaSs8hafQu2zP4APSRbUYAPNot1gUeAocaA3HH4BT';
-    const url = `http://192.168.1.71:3000/ipfs/${ipfsHash}`; // Rota no seu servidor
+socket.on('video imported', ({ ipfsHash }) => {
+    const url = `http://192.168.1.71:3000/ipfs/${ipfsHash}`;
+    fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to fetch IPFS video');
+            }
+            return response.blob();
+        })
+        .then(blob => {
+            const video = document.getElementById('video');
+            video.src = URL.createObjectURL(blob);
+        })
+        .catch(error => {
+            console.error('Erro ao importar vídeo da IPFS:', error.message);
+        });
+});
 
-    try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error('Failed to fetch IPFS video');
+socket.on('current video', (ipfsHash) => {
+    if (ipfsHash) {
+        const url = `http://192.168.1.71:3000/ipfs/${ipfsHash}`;
+        fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch IPFS video');
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                const video = document.getElementById('video');
+                video.src = URL.createObjectURL(blob);
+            })
+            .catch(error => {
+                console.error('Erro ao importar vídeo da IPFS:', error.message);
+            });
+    }
+});
+
+async function importIPFSVideo() {
+    const ipfsHash = prompt('Enter IPFS hash of the video:'); // Você pode ajustar para obter o hash de outra forma
+    if (ipfsHash) {
+        const url = `http://192.168.1.71:3000/ipfs/${ipfsHash}`;
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error('Failed to fetch IPFS video');
+            }
+            const blob = await response.blob();
+            const video = document.getElementById('video');
+            video.src = URL.createObjectURL(blob);
+            socket.emit('video imported', { roomId: roomId, ipfsHash }); // Emite evento para todos na sala
+        } catch (error) {
+            console.error('Erro ao importar vídeo da IPFS:', error.message);
         }
-        const blob = await response.blob();
-        const video = document.getElementById('video');
-        video.src = URL.createObjectURL(blob);
-    } catch (error) {
-        console.error('Erro ao importar vídeo da IPFS:', error.message);
     }
 }
+
 
 // Importar vídeo da IPFS usando ipfs-http-client
 async function importIPFSVideoV1() {
