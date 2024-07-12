@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const { Server } = require("socket.io");
 const path = require('path'); 
+const fetch = require('node-fetch').default;
 
 const app = express();
 const server = http.createServer(app);
@@ -21,6 +22,24 @@ app.use((req, res, next) => {
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
+
+// Configurar rota para lidar com solicitações de IPFS através de um proxy
+app.get('/ipfs/*', async (req, res) => {
+    const ipfsUrl = 'https://ipfs.infura.io' + req.url;
+    try {
+        const response = await fetch(ipfsUrl);
+        if (!response.ok) {
+            throw new Error('Failed to fetch IPFS resource');
+        }
+        const data = await response.blob();
+        res.setHeader('Content-Type', response.headers.get('content-type'));
+        res.send(data);
+    } catch (error) {
+        console.error('Error fetching IPFS resource:', error);
+        res.status(500).send('Error fetching IPFS resource');
+    }
+});
+
 
 // Armazenamento temporário de informações da sala
 let rooms = new Map(); // Mapa para armazenar informações das salas
@@ -61,6 +80,10 @@ io.on('connection', (socket) => {
         // Repassar a mensagem de sincronização para todos os clientes conectados
         io.emit('video sync', data);
         console.log('Forwarded video sync message to all clients');
+    });
+
+    socket.on('video imported', (data) => {
+        socket.to(socket.roomId).emit('video imported', data);
     });
 });
 

@@ -7,6 +7,69 @@ var roomId;
 var userName;
 var lastSentTime = 0;
 
+function importVideo() {
+    fileInput.click();
+}
+
+async function importIPFSVideo() {
+    try {
+        const response = await fetch('/ipfs/QmNPHAaSs8hafQu2zP4APSRbUYAPNot1gUeAocaA3HH4BT');
+        if (!response.ok) {
+            throw new Error('Failed to fetch IPFS video');
+        }
+        const videoBlob = await response.blob();
+        const videoUrl = URL.createObjectURL(videoBlob);
+        video.src = videoUrl;
+    } catch (error) {
+        console.error('Erro ao importar vídeo da IPFS:', error);
+    }
+}
+
+// Importar vídeo da IPFS usando ipfs-http-client
+async function importIPFSVideoV1() {
+    try {
+        // CID do vídeo na IPFS
+        const ipfsCid = 'QmNPHAaSs8hafQu2zP4APSRbUYAPNot1gUeAocaA3HH4BT';
+
+        // URL da gateway IPFS
+        // const ipfsGatewayUrl = `https://ipfs.io/ipfs/${ipfsCid}`;
+        // const ipfsGatewayUrl = `https://cloudflare-ipfs.com/ipfs/${ipfsCid}`;
+        const ipfsGatewayUrl = `https://ipfs.infura.io/ipfs/${ipfsCid}`;
+
+        // Obter dados do vídeo da IPFS
+        const response = await fetch(ipfsGatewayUrl);
+        const blob = await response.blob();
+
+        // Criar URL local para o vídeo
+        const videoUrl = URL.createObjectURL(blob);
+
+        // Carregar vídeo na interface
+        video.src = videoUrl;
+        video.load();
+
+        // Exemplo de sincronização com o servidor
+        socket.emit('video sync', { action: 'play', currentTime: video.currentTime });
+
+    } catch (error) {
+        console.error('Erro ao importar vídeo da IPFS:', error);
+    }
+}
+
+function loadVideo(event) {
+    var file = event.target.files[0];
+    var url = URL.createObjectURL(file);
+    video.src = url;
+    video.load();
+
+    // Enviar a URL do vídeo para todos na sala
+    socket.emit('video imported', { url: url });
+
+    // Garantir que o vídeo seja reproduzido no celular
+    video.addEventListener('loadeddata', function() {
+        video.play();
+    }, { once: true });
+}
+
 if (video) {
     // Adicionar ouvintes de evento somente se o elemento de vídeo existir
     // Enviar mensagem quando o vídeo é reproduzido
@@ -56,6 +119,7 @@ if (video) {
             }
         // }
     });
+
 }
 
 function createRoom() {
@@ -78,14 +142,6 @@ function joinRoom() {
     document.getElementById('joinRoom').style.display = 'none';
     document.getElementById('videoContainer').style.display = 'block';
     socket.emit('join room', { roomId: roomId, userName: userName });
-}
-
-function importVideo() {
-    const videoUrl = prompt("Insira a URL do vídeo:");
-    if (videoUrl) {
-        localStorage.setItem('videoUrl', videoUrl);
-        video.src = videoUrl;
-    }
 }
 
 window.onload = function() {

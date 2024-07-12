@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Synced Video Player</title>
+    <title>Synced Video Player with IPFS</title>
     <script src="/socket.io/socket.io.js"></script>
     <link rel="stylesheet" type="text/css" href="style.css">
     
@@ -27,14 +27,20 @@
         </div>
 
         <div id="videoContainer">
-            <div id="videoControls">
-                <button onclick="importVideo()">Importar Vídeo</button>
-            </div>
+            <button onclick="importIPFSVideo()">Importar Vídeo da IPFS</button>
+            <video id="video" controls>
+                Your browser does not support the video tag.
+            </video>
+        </div>
+
+        <!-- <div id="videoContainer">
+            <button onclick="importVideo()">Importar Vídeo</button>
+            <input type="file" id="fileInput" accept="video/*" style="display: none;" onchange="loadVideo(event)">
             <video id="video" controls>
                 <source src="/example-video.mp4" type="video/mp4">
                 Your browser does not support the video tag.
             </video>
-        </div>
+        </div> -->
 
         <ul id="messages"></ul>
 
