@@ -12,16 +12,19 @@ function importVideo() {
 }
 
 async function importIPFSVideo() {
+    const ipfsHash = 'QmNPHAaSs8hafQu2zP4APSRbUYAPNot1gUeAocaA3HH4BT';
+    const url = `http://192.168.1.71:3000/ipfs/${ipfsHash}`; // Rota no seu servidor
+
     try {
-        const response = await fetch('/ipfs/QmNPHAaSs8hafQu2zP4APSRbUYAPNot1gUeAocaA3HH4BT');
+        const response = await fetch(url);
         if (!response.ok) {
             throw new Error('Failed to fetch IPFS video');
         }
-        const videoBlob = await response.blob();
-        const videoUrl = URL.createObjectURL(videoBlob);
-        video.src = videoUrl;
+        const blob = await response.blob();
+        const video = document.getElementById('video');
+        video.src = URL.createObjectURL(blob);
     } catch (error) {
-        console.error('Erro ao importar vídeo da IPFS:', error);
+        console.error('Erro ao importar vídeo da IPFS:', error.message);
     }
 }
 

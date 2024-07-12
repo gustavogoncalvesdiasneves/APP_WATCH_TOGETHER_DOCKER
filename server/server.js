@@ -23,20 +23,36 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
 
-// Configurar rota para lidar com solicitações de IPFS através de um proxy
-app.get('/ipfs/*', async (req, res) => {
-    const ipfsUrl = 'https://ipfs.infura.io' + req.url;
+
+// Função para importar vídeo da IPFS através do servidor
+async function importIPFSVideo(ipfsHash) {
+    const url = `https://ipfs.infura.io/ipfs/${ipfsHash}`;
+
     try {
-        const response = await fetch(ipfsUrl);
+        const response = await fetch(url);
         if (!response.ok) {
-            throw new Error('Failed to fetch IPFS resource');
+            throw new Error('Failed to fetch IPFS video');
         }
-        const data = await response.blob();
-        res.setHeader('Content-Type', response.headers.get('content-type'));
-        res.send(data);
+        const blob = await response.blob();
+        return blob;
     } catch (error) {
-        console.error('Error fetching IPFS resource:', error);
-        res.status(500).send('Error fetching IPFS resource');
+        console.error('Erro ao importar vídeo da IPFS:', error.message);
+        throw error;
+    }
+}
+
+// Rota para importar vídeo da IPFS através do servidor
+app.get('/ipfs/:hash', async (req, res) => {
+    const ipfsHash = req.params.hash;
+    try {
+        const blob = await importIPFSVideo(ipfsHash);
+        res.writeHead(200, {
+            'Content-Type': 'video/mp4'
+        });
+        blob.stream.pipe(res); // Envie o stream do blob como resposta
+    } catch (error) {
+        console.error('Erro ao importar vídeo da IPFS:', error.message);
+        res.status(500).send('Erro ao importar vídeo da IPFS'); // Envie um status de erro se houver problema
     }
 });
 
