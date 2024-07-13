@@ -68,37 +68,6 @@ async function importIPFSVideo() {
     }
 }
 
-
-// Importar vídeo da IPFS usando ipfs-http-client
-async function importIPFSVideoV1() {
-    try {
-        // CID do vídeo na IPFS
-        const ipfsCid = 'QmNPHAaSs8hafQu2zP4APSRbUYAPNot1gUeAocaA3HH4BT';
-
-        // URL da gateway IPFS
-        // const ipfsGatewayUrl = `https://ipfs.io/ipfs/${ipfsCid}`;
-        // const ipfsGatewayUrl = `https://cloudflare-ipfs.com/ipfs/${ipfsCid}`;
-        const ipfsGatewayUrl = `https://ipfs.infura.io/ipfs/${ipfsCid}`;
-
-        // Obter dados do vídeo da IPFS
-        const response = await fetch(ipfsGatewayUrl);
-        const blob = await response.blob();
-
-        // Criar URL local para o vídeo
-        const videoUrl = URL.createObjectURL(blob);
-
-        // Carregar vídeo na interface
-        video.src = videoUrl;
-        video.load();
-
-        // Exemplo de sincronização com o servidor
-        socket.emit('video sync', { action: 'play', currentTime: video.currentTime });
-
-    } catch (error) {
-        console.error('Erro ao importar vídeo da IPFS:', error);
-    }
-}
-
 function loadVideo(event) {
     var file = event.target.files[0];
     var url = URL.createObjectURL(file);
@@ -174,6 +143,8 @@ function createRoom() {
     document.getElementById('createRoom').style.display = 'none';
     document.getElementById('joinRoom').style.display = 'none';
     document.getElementById('videoContainer').style.display = 'block';
+    document.getElementById('messages').style.display = 'block';
+    document.getElementById('form').style.display = 'block';
     socket.emit('join room', { roomId: roomId, userName: userName });
 }
 
@@ -185,6 +156,8 @@ function joinRoom() {
     document.getElementById('createRoom').style.display = 'none';
     document.getElementById('joinRoom').style.display = 'none';
     document.getElementById('videoContainer').style.display = 'block';
+    document.getElementById('messages').style.display = 'block';
+    document.getElementById('form').style.display = 'block';
     socket.emit('join room', { roomId: roomId, userName: userName });
 }
 

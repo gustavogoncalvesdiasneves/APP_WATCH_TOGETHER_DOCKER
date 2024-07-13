@@ -25,7 +25,7 @@
             <input type="text" id="userNameJoin" name="userNameJoin"><br><br>
             <button onclick="joinRoom()">Entrar na Sala</button>
         </div>
-
+        
         <div id="videoContainer">
             <button onclick="importIPFSVideo()">Importar Vídeo da IPFS</button>
             <video id="video" controls>
@@ -33,20 +33,16 @@
             </video>
         </div>
 
-        <!-- <div id="videoContainer">
-            <button onclick="importVideo()">Importar Vídeo</button>
-            <input type="file" id="fileInput" accept="video/*" style="display: none;" onchange="loadVideo(event)">
-            <video id="video" controls>
-                <source src="/example-video.mp4" type="video/mp4">
-                Your browser does not support the video tag.
-            </video>
-        </div> -->
+        <div id="chat">
+    
+            <ul id="messages"></ul>
+    
+            <form id="form" action="">
+                <input id="input" autocomplete="off" placeholder="Digite sua mensagem..." /><button>Enviar</button>
+            </form>
+        </div>
 
-        <ul id="messages"></ul>
-
-        <form id="form" action="">
-            <input id="input" autocomplete="off" placeholder="Digite sua mensagem..." /><button>Enviar</button>
-        </form>
+        
     </div>
 
     <script src="script.js" defer></script>

@@ -1,49 +1,116 @@
 body {
     font-family: Arial, sans-serif;
-    margin: 0;
+    background-color: #f4f4f4;
+    margin: 1.2rem;
     padding: 0;
-    background-color: #f9f9f9;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
 }
 .container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
+    display: flex;
+    flex-direction: row;
+    width: 90%;
+}
+#chat {
+    margin: 0 1rem;
 }
 #createRoom, #joinRoom {
-    margin-bottom: 20px;
+    /* margin-bottom: 20px; */
+    margin: 0 1rem;
+}
+#createRoom, input, label {
+    /* margin-bottom: 20px; */
+    width: 100%;
+    font-size: 1rem;
+    margin: .5rem 0;
+}
+#joinRoom, input, label {
+    /* margin-bottom: 20px; */
+    width: 100%;
+    font-size: 1rem;
+    margin: .5rem 0;
 }
 #videoContainer {
+    width: 90%;
+    max-width: 600px;
+    background-color: #fff;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    /* margin-bottom: 20px; */
     display: none;
-    margin-bottom: 20px;
+    align-content: center;
 }
-#video {
+#videoContainer button {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 10px;
+}
+#videoContainer button:hover {
+    background-color: #0056b3;
+}
+#videoContainer video {
     width: 100%;
-    height: auto;
+    max-height: 80vh;
+    /* max-height: 30vh; */
+    border-radius: 8px;
+    height: 80%;
 }
 #videoControls {
     display: flex;
     justify-content: flex-end;
     margin-bottom: 10px;
 }
-#messages {
+ul#messages {
     list-style-type: none;
     padding: 0;
-    margin: 0;
-    border-top: 1px solid #ccc;
-}
-#messages li {
+    width: 90%;
+    max-width: 600px;
+    background-color: #fff;
     padding: 10px;
-    border-bottom: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    display: none;
+    max-height: 200px;
+    min-height: 200px;
+    overflow-y: auto;
 }
-#form {
+ul#messages li {
+    padding: 8px;
+    border-bottom: 1px solid #ddd;
+}
+ul#messages li:last-child {
+    border-bottom: none;
+}
+form#form {
+    width: 90%;
+    max-width: 600px;
     display: flex;
-    margin-top: 20px;
+    display: none;
+    /* margin-top: 20px;  */
 }
-#input {
-    flex-grow: 1;
+form#form input {
+    flex: 1;
     padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+    border: 1px solid #ddd;
+    border-radius: 4px 0 0 4px;
+    margin-bottom: 1rem;
+}
+form#form button {
+    position: relative;
+    /* right: 3.3rem; */
 }
 button {
     padding: 10px;
@@ -52,8 +119,190 @@ button {
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    margin-left: 10px;
+    /* margin-left: 10px; */
 }
 button:hover {
     background-color: #0056b3;
+}
+
+/* DESIGN ITS NOT ALREADY */
+@media screen and (max-width: 575.98px)  
+{
+    body {
+        height: 100%;
+        align-content: center;
+    }
+
+    .container {
+        display: flex;
+        flex-direction: column;
+        align-content: center;
+        align-items: center;
+    }
+
+    #createRoom, input, label, button {
+        /* margin-bottom: 20px; */
+        width: 100%;
+        font-size: 3rem;
+        margin: .5rem 0;
+    }
+    
+    #joinRoom, input, label, button {
+        /* margin-bottom: 20px; */
+        width: 100%;
+        font-size: 3rem;
+        margin: .5rem 0;
+    }
+
+    #videoContainer {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    #chat {
+        width: 100%;
+    }
+
+    form#form {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    ul#messages {
+        width: 100%;
+        max-width: 100%;
+        min-height: 30vh;
+    }
+    
+    form#form input {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    form#form button {
+        width: 100%;
+        max-width: 100%;
+    }
+}
+
+/* DESIGN ITS NOT ALREADY */
+@media screen and (min-width: 576px) and (max-width: 767px) 
+{
+    body {
+        height: 100%;
+        align-content: center;
+    }
+
+    .container {
+        display: flex;
+        flex-direction: column;
+        align-content: center;
+        align-items: center;
+    }
+
+    #createRoom, input, label, button {
+        /* margin-bottom: 20px; */
+        width: 100%;
+        font-size: 3rem;
+        margin: .5rem 0;
+    }
+    
+    #joinRoom, input, label, button {
+        /* margin-bottom: 20px; */
+        width: 100%;
+        font-size: 3rem;
+        margin: .5rem 0;
+    }
+
+    #videoContainer {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    #chat {
+        width: 100%;
+    }
+
+    form#form {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    ul#messages {
+        width: 100%;
+        max-width: 100%;
+        min-height: 30vh;
+    }
+    
+    form#form input {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    form#form button {
+        width: 100%;
+        max-width: 100%;
+    }
+}
+
+/* DESIGN ITS ALREADY */
+@media screen and (min-width: 768px) and (max-width: 991px) 
+{
+
+    body {
+        height: 100%;
+        align-content: center;
+    }
+
+    .container {
+        display: flex;
+        flex-direction: column;
+        align-content: center;
+        align-items: center;
+    }
+
+    #createRoom, input, label, button {
+        /* margin-bottom: 20px; */
+        width: 100%;
+        font-size: 3rem;
+        margin: .5rem 0;
+    }
+    
+    #joinRoom, input, label, button {
+        /* margin-bottom: 20px; */
+        width: 100%;
+        font-size: 3rem;
+        margin: .5rem 0;
+    }
+
+    #videoContainer {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    #chat {
+        width: 100%;
+    }
+
+    form#form {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    ul#messages {
+        width: 100%;
+        max-width: 100%;
+        min-height: 30vh;
+    }
+    
+    form#form input {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    form#form button {
+        width: 100%;
+        max-width: 100%;
+    }
+
 }
