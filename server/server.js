@@ -77,7 +77,7 @@ io.on('connection', (socket) => {
         // Envie o vídeo atual da sala para o usuário que acabou de se juntar
         socket.emit('current video', room.videoHash);
 
-        io.to(roomId).emit('user joined', room.users);
+        io.to(roomId).emit('user joined', { userName }); // Envia notificação de entrada do usuário
     });
 
     socket.on('chat message', ({ userId, message }) => {
@@ -90,7 +90,7 @@ io.on('connection', (socket) => {
         if (socket.roomId && rooms.has(socket.roomId)) {
             const room = rooms.get(socket.roomId);
             room.users = room.users.filter(user => user.userId !== socket.id);
-            io.to(socket.roomId).emit('user left', room.users);
+            io.to(socket.roomId).emit('user left', { userName: socket.userName }); // Envia notificação de saída do usuário
         }
     });
 

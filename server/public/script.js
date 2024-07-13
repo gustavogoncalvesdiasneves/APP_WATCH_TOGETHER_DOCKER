@@ -204,3 +204,19 @@ socket.on('video sync', function(data) {
             break;
     }
 });
+
+// Evento para notificar quando um usuário entra na sala
+socket.on('user joined', function(data) {
+    var item = document.createElement('li');
+    item.textContent = data.userName + " joined the room";
+    messages.appendChild(item);
+    window.scrollTo(0, document.body.scrollHeight);
+});
+
+// Evento para notificar quando um usuário sai da sala
+socket.on('user left', function(data) {
+    var item = document.createElement('li');
+    item.textContent = data.userName + " left the room";
+    messages.appendChild(item);
+    window.scrollTo(0, document.body.scrollHeight);
+});
