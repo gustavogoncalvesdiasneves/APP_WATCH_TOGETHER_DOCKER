@@ -10,35 +10,36 @@ body {
     height: 100vh;
 }
 .container {
-    max-width: 1200px;
-    margin: 0 auto;
+    /* max-width: 1200px; */
+    max-width: 100%;
+    /* margin: 0 auto; */
     padding: 20px;
     display: flex;
     flex-direction: row;
-    width: 90%;
+    width: 1000%;
 }
 #chat {
     margin: 0 1rem;
 }
 #createRoom, #joinRoom {
     /* margin-bottom: 20px; */
-    margin: 0 1rem;
+    margin: 0.5rem 1rem;
 }
 #createRoom, input, label {
     /* margin-bottom: 20px; */
     width: 100%;
     font-size: 1rem;
-    margin: .5rem 0;
+    /* margin: .5rem 0; */
 }
 #joinRoom, input, label {
     /* margin-bottom: 20px; */
     width: 100%;
     font-size: 1rem;
-    margin: .5rem 0;
+    /* margin: .5rem 0; */
 }
 #videoContainer {
-    width: 90%;
-    max-width: 600px;
+    width: 100%;
+    /* max-width: 600px; */
     background-color: #fff;
     padding: 10px;
     border-radius: 8px;
@@ -83,8 +84,8 @@ ul#messages {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     margin-bottom: 20px;
     display: none;
-    max-height: 200px;
-    min-height: 200px;
+    max-height: 80%;
+    min-height: 40vh;
     overflow-y: auto;
 }
 ul#messages li {
@@ -293,6 +294,10 @@ button:hover {
         width: 100%;
         max-width: 100%;
         min-height: 30vh;
+    }
+
+    ul#messages li {
+        font-size: 3rem;
     }
     
     form#form input {
