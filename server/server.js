@@ -8,6 +8,9 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+// Conjunto para armazenar IDs de sala existentes
+let existingRooms = new Set();
+
 // Configurar para servir arquivos estáticos
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -68,29 +71,82 @@ io.on('connection', (socket) => {
         socket.userName = userName;
 
         if (!rooms.has(roomId)) {
-            rooms.set(roomId, { users: [], videoHash: null });
+            rooms.set(roomId, { users: [], videoHash: null, admin: socket.id });
         }
-        
+
         const room = rooms.get(roomId);
+
+        // Se ainda não houver um admin, designe o usuário atual como admin
+        if (!room.admin) {
+            room.admin = socket.id;
+            socket.emit('you are admin');
+        }
+
         room.users.push({ userId: socket.id, userName: userName });
 
         // Envie o vídeo atual da sala para o usuário que acabou de se juntar
         socket.emit('current video', room.videoHash);
 
-        io.to(roomId).emit('user joined', { userName }); // Envia notificação de entrada do usuário
+        io.to(roomId).emit('user joined', room.users, room.admin); // Envie também o admin para todos na sala
     });
 
+    socket.on('remove user', ({ roomId, userId }) => {
+        const room = rooms.get(roomId);
+        if (room && socket.id === room.admin) {
+            const userToRemove = room.users.find(user => user.userId === userId);
+            if (userToRemove) {
+                // Emitir mensagem para o chat informando que o usuário foi removido
+                io.to(roomId).emit('chat message', {
+                    userId: 'server',
+                    userName: 'Server',
+                    message: `${userToRemove.userName} was removed from this room (ID: ${roomId}).`
+                });
+    
+                // Remover usuário da sala
+                io.sockets.sockets.get(userId).leave(roomId);
+                room.users = room.users.filter(user => user.userId !== userId);
+                io.to(roomId).emit('user left', room.users, room.admin);
+            }
+        }
+    });    
+       
     socket.on('chat message', ({ userId, message }) => {
         console.log(`Message from ${userId}: ${message}`);
-        io.to(socket.roomId).emit('chat message', { userId: userId, userName: socket.userName, message: message });
+    
+        // Verificar se o usuário ainda está na sala
+        const room = rooms.get(socket.roomId);
+        if (room && room.users.some(user => user.userId === userId)) {
+            // Propagar a mensagem para todos na sala
+            io.to(socket.roomId).emit('chat message', { userId: userId, userName: socket.userName, message: message });
+        } else {
+            console.log(`User ${userId} tried to send a message but is no longer in room ${socket.roomId}`);
+            // Ou outra ação apropriada, como ignorar a mensagem ou enviar uma resposta de erro ao usuário
+        }
     });
+    
+
+    // socket.on('chat message', ({ userId, message }) => {
+    //     console.log(`Message from ${userId}: ${message}`);
+    //     io.to(socket.roomId).emit('chat message', { userId: userId, userName: socket.userName, message: message });
+    // });
 
     socket.on('disconnect', () => {
         console.log('user disconnected');
         if (socket.roomId && rooms.has(socket.roomId)) {
             const room = rooms.get(socket.roomId);
             room.users = room.users.filter(user => user.userId !== socket.id);
-            io.to(socket.roomId).emit('user left', { userName: socket.userName }); // Envia notificação de saída do usuário
+            io.to(socket.roomId).emit('user left', room.users, room.admin);
+        }
+    });
+
+    // Evento para criar uma nova sala
+    socket.on('create room', ({ roomId, userName }) => {
+        if (existingRooms.has(roomId)) {
+            socket.emit('room creation failed', { message: 'ID da sala já existe. Por favor, escolha outro ID.' });
+        } else {
+            existingRooms.add(roomId);
+            rooms.set(roomId, { users: [], videoHash: null, admin: socket.id });
+            socket.emit('room created', { roomId: roomId, userName: userName });
         }
     });
 

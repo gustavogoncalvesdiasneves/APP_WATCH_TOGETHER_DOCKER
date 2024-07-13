@@ -3,9 +3,15 @@ var video = document.getElementById('video');
 var messages = document.getElementById('messages');
 var form = document.getElementById('form');
 var input = document.getElementById('input');
+var userListContainer = document.getElementById('userListContainer');
+var userList = document.getElementById('userList');
+var isAdmin = false;
+var adminNotification = document.getElementById('adminNotification');
+
 var roomId;
 var userName;
 var lastSentTime = 0;
+
 
 function importVideo() {
     fileInput.click();
@@ -136,6 +142,36 @@ if (video) {
 }
 
 function createRoom() {
+    // var roomIdInput = document.getElementById('roomId');
+    // var creatorNameInput = document.getElementById('creatorName');
+    // var roomId = roomIdInput.value.trim();
+    // var userName = creatorNameInput.value.trim();
+    
+    socket.emit('create room', { roomId: roomId, userName: userName });
+
+    socket.on('room created', function(data) {
+        console.log('Sala criada:', data.roomId);
+        var roomIdInput = document.getElementById('roomId');
+        var creatorNameInput = document.getElementById('creatorName');
+        roomId = roomIdInput.value;
+        userName = creatorNameInput.value + " - Admin";
+        document.getElementById('roomIDDisplay').textContent = roomId;
+        document.getElementById('createRoom').style.display = 'none';
+        document.getElementById('joinRoom').style.display = 'none';
+        document.getElementById('videoContainer').style.display = 'block';
+        document.getElementById('messages').style.display = 'block';
+        document.getElementById('form').style.display = 'block';
+        document.getElementById('userListContainer').style.display = 'block';
+        socket.emit('join room', { roomId: roomId, userName: userName });
+    });
+
+    socket.on('room creation failed', function(data) {
+        alert(data.message);
+        // Lógica para lidar com falha na criação da sala
+    });
+}
+
+function createRoomV0() {
     var roomIdInput = document.getElementById('roomId');
     var creatorNameInput = document.getElementById('creatorName');
     roomId = roomIdInput.value;
@@ -145,6 +181,7 @@ function createRoom() {
     document.getElementById('videoContainer').style.display = 'block';
     document.getElementById('messages').style.display = 'block';
     document.getElementById('form').style.display = 'block';
+    document.getElementById('userListContainer').style.display = 'block';
     socket.emit('join room', { roomId: roomId, userName: userName });
 }
 
@@ -153,11 +190,13 @@ function joinRoom() {
     var userNameJoinInput = document.getElementById('userNameJoin');
     roomId = roomIdJoinInput.value;
     userName = userNameJoinInput.value;
+    document.getElementById('roomIDDisplay').textContent = roomId;
     document.getElementById('createRoom').style.display = 'none';
     document.getElementById('joinRoom').style.display = 'none';
     document.getElementById('videoContainer').style.display = 'block';
     document.getElementById('messages').style.display = 'block';
     document.getElementById('form').style.display = 'block';
+    document.getElementById('userListContainer').style.display = 'block';
     socket.emit('join room', { roomId: roomId, userName: userName });
 }
 
@@ -205,18 +244,63 @@ socket.on('video sync', function(data) {
     }
 });
 
-// Evento para notificar quando um usuário entra na sala
-socket.on('user joined', function(data) {
-    var item = document.createElement('li');
-    item.textContent = data.userName + " joined the room";
-    messages.appendChild(item);
-    window.scrollTo(0, document.body.scrollHeight);
+
+socket.on('user joined', function(users, adminId) {
+    if (Array.isArray(users)) {
+        updateUserList(users, adminId);
+    } else {
+        console.error('Received invalid users data:', users);
+    }
 });
 
-// Evento para notificar quando um usuário sai da sala
-socket.on('user left', function(data) {
-    var item = document.createElement('li');
-    item.textContent = data.userName + " left the room";
-    messages.appendChild(item);
-    window.scrollTo(0, document.body.scrollHeight);
+// Adicione um listener para o evento 'user left' no cliente
+socket.on('user left', function(users, adminId) {
+    // Atualize a lista de usuários e admin na interface
+    if (Array.isArray(users)) {
+        updateUserList(users, adminId);
+    } else {
+        console.error('Received invalid users data:', users);
+    }
+
+    // Verifique se o usuário atual foi removido
+    const userLeft = users.find(user => user.userId === socket.id);
+    if (!userLeft) {
+        // Oculte elementos relacionados à sala
+        document.getElementById('videoContainer').style.display = 'none';
+        document.getElementById('messages').style.display = 'none';
+        document.getElementById('form').style.display = 'none';
+        document.getElementById('userListContainer').style.display = 'none';
+
+        // Exiba elementos para criar ou entrar em uma sala
+        document.getElementById('createRoom').style.display = 'block';
+        document.getElementById('joinRoom').style.display = 'block';
+    }
 });
+
+socket.on('you are admin', function() {
+    isAdmin = true;
+    adminNotification.style.display = 'block';
+});
+
+function updateUserList(users, adminId) {
+    userList.innerHTML = '';
+    users.forEach(function(user) {
+        var item = document.createElement('li');
+        item.textContent = user.userName;
+        if (socket.id === adminId && user.userId !== socket.id) {
+            var removeButton = document.createElement('button');
+            removeButton.textContent = 'Remover';
+            removeButton.onclick = function() {
+                removeUser(user.userId);
+            };
+            item.appendChild(removeButton);
+        }
+        userList.appendChild(item);
+    });
+}
+
+function removeUser(userId) {
+    socket.emit('remove user', { roomId: roomId, userId: userId });
+}
+
+
