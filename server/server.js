@@ -51,10 +51,13 @@ app.get('/ipfs/:hash', async (req, res) => {
         res.writeHead(200, {
             'Content-Type': 'video/mp4'
         });
-        blob.stream.pipe(res); // Envie o stream do blob como resposta
+        const stream = blob.stream ? blob.stream() : new ReadableStream(); // Garantir que seja um stream
+        stream.pipe(res); // Envie o stream do blob como resposta
     } catch (error) {
         console.error('Erro ao importar vídeo da IPFS:', error.message);
-        res.status(500).send('Erro ao importar vídeo da IPFS'); // Envie um status de erro se houver problema
+        if (!res.headersSent) {
+            res.status(500).send('Erro ao importar vídeo da IPFS'); // Envie um status de erro se houver problema
+        }
     }
 });
 
@@ -123,12 +126,6 @@ io.on('connection', (socket) => {
             // Ou outra ação apropriada, como ignorar a mensagem ou enviar uma resposta de erro ao usuário
         }
     });
-    
-
-    // socket.on('chat message', ({ userId, message }) => {
-    //     console.log(`Message from ${userId}: ${message}`);
-    //     io.to(socket.roomId).emit('chat message', { userId: userId, userName: socket.userName, message: message });
-    // });
 
     socket.on('disconnect', () => {
         console.log('user disconnected');
@@ -152,16 +149,31 @@ io.on('connection', (socket) => {
 
     socket.on('video sync', (data) => {
         console.log('Received video sync message:', data);
-        io.to(socket.roomId).emit('video sync', data);
-        console.log('Forwarded video sync message to all clients');
+        const room = rooms.get(socket.roomId);
+        if (room && room.users.some(user => user.userId === socket.id)) {
+            io.to(socket.roomId).emit('video sync', data);
+            console.log('Forwarded video sync message to all clients');
+        } else {
+            console.log(`User ${socket.id} tried to sync video but is no longer in room ${socket.roomId}`);
+        }
     });
 
-    socket.on('video imported', ({ roomId, ipfsHash }) => {
+    socket.on('video imported', async ({ roomId, ipfsHash }) => {
         console.log(`Video imported in room ${roomId}: ${ipfsHash}`);
-        if (rooms.has(roomId)) {
-            rooms.get(roomId).videoHash = ipfsHash;
+        try {
+            const blob = await importIPFSVideo(ipfsHash);
+            if (rooms.has(roomId)) {
+                rooms.get(roomId).videoHash = ipfsHash;
+            }
+            io.to(roomId).emit('video imported', { ipfsHash });
+        } catch (error) {
+            console.error('Erro ao importar vídeo da IPFS:', error.message);
+            io.to(roomId).emit('chat message', {
+                userId: 'server',
+                userName: 'Server',
+                message: `Não foi possível importar o vídeo da IPFS: ${error.message}. Certifique-se de que o IPFS está ligado.`
+            });
         }
-        io.to(roomId).emit('video imported', { ipfsHash });
     });
 });
 

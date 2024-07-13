@@ -6,6 +6,7 @@ var input = document.getElementById('input');
 var userListContainer = document.getElementById('userListContainer');
 var userList = document.getElementById('userList');
 var isAdmin = false;
+var isRemoved = false;
 var adminNotification = document.getElementById('adminNotification');
 
 var roomId;
@@ -89,56 +90,56 @@ function loadVideo(event) {
     }, { once: true });
 }
 
+// Adicionar verificação antes de enviar comandos de vídeo
 if (video) {
-    // Adicionar ouvintes de evento somente se o elemento de vídeo existir
-    // Enviar mensagem quando o vídeo é reproduzido
     video.addEventListener('play', function() {
-        console.log('Play event triggered');
-        socket.emit('video sync', { action: 'play', currentTime: video.currentTime});
-    });
-
-    // Enviar mensagem quando o vídeo é pausado
-    video.addEventListener('pause', function() {
-        console.log('Pause event triggered');
-        socket.emit('video sync', { action: 'pause', currentTime: video.currentTime});
-    });
-
-    // Enviar mensagem quando o vídeo é avançado ou retrocedido
-    video.addEventListener('seeked', function() {
-        console.log('Seek event triggered');
-        var currentTime = video.currentTime;
-        if (Math.abs(currentTime - lastSentTime) > 0.5) { // Only send if there's a significant change
-            console.log('Sending seek message:', currentTime);
-            socket.emit('video sync', { action: 'seek', currentTime: currentTime});
-            lastSentTime = currentTime;
+        if (!isRemoved) {
+            console.log('Play event triggered');
+            socket.emit('video sync', { action: 'play', currentTime: video.currentTime });
         }
     });
+
+    video.addEventListener('pause', function() {
+        if (!isRemoved) {
+            console.log('Pause event triggered');
+            socket.emit('video sync', { action: 'pause', currentTime: video.currentTime });
+        }
+    });
+
+    video.addEventListener('seeked', function() {
+        if (!isRemoved) {
+            console.log('Seek event triggered');
+            var currentTime = video.currentTime;
+            if (Math.abs(currentTime - lastSentTime) > 0.5) { // Only send if there's a significant change
+                console.log('Sending seek message:', currentTime);
+                socket.emit('video sync', { action: 'seek', currentTime: currentTime });
+                lastSentTime = currentTime;
+            }
+        }
+    });
+
     // Receber mensagens de sincronização do servidor
     socket.on('video sync', function(data) {
-        console.log('Received video sync message:', data);
-        // if (data.clientId === clientIdInput.value) {
+        if (!isRemoved) {
+            console.log('Received video sync message:', data);
             switch(data.action) {
                 case 'play':
-                    // Sincronizar a reprodução e a posição de reprodução
                     console.log('Play action received');
                     video.currentTime = data.currentTime;
                     video.play();
                     break;
                 case 'pause':
-                    // Sincronizar a pausa e a posição de reprodução
                     console.log('Pause action received');
                     video.currentTime = data.currentTime;
                     video.pause();
                     break;
                 case 'seek':
-                    // Sincronizar a posição de reprodução com base na mensagem de busca recebida
                     console.log('Seek action received');
                     video.currentTime = data.currentTime;
                     break;
             }
-        // }
+        }
     });
-
 }
 
 function createRoom() {
@@ -265,6 +266,7 @@ socket.on('user left', function(users, adminId) {
     // Verifique se o usuário atual foi removido
     const userLeft = users.find(user => user.userId === socket.id);
     if (!userLeft) {
+        isRemoved = true; // Marcar o usuário como removido
         // Oculte elementos relacionados à sala
         document.getElementById('videoContainer').style.display = 'none';
         document.getElementById('messages').style.display = 'none';
