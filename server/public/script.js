@@ -143,10 +143,6 @@ if (video) {
 }
 
 function createRoom() {
-    // var roomIdInput = document.getElementById('roomId');
-    // var creatorNameInput = document.getElementById('creatorName');
-    // var roomId = roomIdInput.value.trim();
-    // var userName = creatorNameInput.value.trim();
     
     socket.emit('create room', { roomId: roomId, userName: userName });
 
@@ -170,20 +166,6 @@ function createRoom() {
         alert(data.message);
         // Lógica para lidar com falha na criação da sala
     });
-}
-
-function createRoomV0() {
-    var roomIdInput = document.getElementById('roomId');
-    var creatorNameInput = document.getElementById('creatorName');
-    roomId = roomIdInput.value;
-    userName = creatorNameInput.value + " - Admin";
-    document.getElementById('createRoom').style.display = 'none';
-    document.getElementById('joinRoom').style.display = 'none';
-    document.getElementById('videoContainer').style.display = 'block';
-    document.getElementById('messages').style.display = 'block';
-    document.getElementById('form').style.display = 'block';
-    document.getElementById('userListContainer').style.display = 'block';
-    socket.emit('join room', { roomId: roomId, userName: userName });
 }
 
 function joinRoom() {
@@ -285,6 +267,7 @@ socket.on('you are admin', function() {
 });
 
 function updateUserList(users, adminId) {
+    var userList = document.getElementById('userList');
     userList.innerHTML = '';
     users.forEach(function(user) {
         var item = document.createElement('li');
@@ -301,8 +284,57 @@ function updateUserList(users, adminId) {
     });
 }
 
+
 function removeUser(userId) {
     socket.emit('remove user', { roomId: roomId, userId: userId });
 }
 
+function requestJoinRoom() {
+    var roomIdJoinInput = document.getElementById('roomIdJoin');
+    var userNameJoinInput = document.getElementById('userNameJoin');
+    roomId = roomIdJoinInput.value;
+    userName = userNameJoinInput.value;
+    socket.emit('request join room', { roomId: roomId, userName: userName });
+}
 
+// Lidar com a aprovação da solicitação de entrada
+socket.on('join room approved', function(data) {
+    roomId = data.roomId;
+    userName = data.userName;
+    console.log(`Nome do usuário aprovado: ${userName}`); // Log para verificar o nome
+    document.getElementById('roomIDDisplay').textContent = roomId;
+    document.getElementById('createRoom').style.display = 'none';
+    document.getElementById('joinRoom').style.display = 'none';
+    document.getElementById('videoContainer').style.display = 'block';
+    document.getElementById('messages').style.display = 'block';
+    document.getElementById('form').style.display = 'block';
+    document.getElementById('userListContainer').style.display = 'block';
+});
+
+
+// Lidar com a rejeição da solicitação de entrada
+socket.on('join room rejected', function(data) {
+    alert(data.message);
+});
+
+// Lidar com a solicitação de entrada recebida (admin)
+socket.on('join request', function(data) {
+    var item = document.createElement('li');
+    item.textContent = data.userName + " wants to join the room.";
+    
+    var approveButton = document.createElement('button');
+    approveButton.textContent = 'Approve';
+    approveButton.onclick = function() {
+        socket.emit('respond join request', { roomId: roomId, userId: data.userId, approve: true });
+    };
+
+    var rejectButton = document.createElement('button');
+    rejectButton.textContent = 'Reject';
+    rejectButton.onclick = function() {
+        socket.emit('respond join request', { roomId: roomId, userId: data.userId, approve: false });
+    };
+
+    item.appendChild(approveButton);
+    item.appendChild(rejectButton);
+    userList.appendChild(item);
+});

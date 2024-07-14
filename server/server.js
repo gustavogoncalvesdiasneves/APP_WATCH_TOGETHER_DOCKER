@@ -175,6 +175,45 @@ io.on('connection', (socket) => {
             });
         }
     });
+
+
+    // Evento para solicitar entrada na sala
+    socket.on('request join room', ({ roomId, userName }) => {
+        console.log(`User requested to join room ${roomId}: ${userName}`);
+        const room = rooms.get(roomId);
+        if (room) {
+            socket.userName = userName;  // Armazene o nome do usuário temporariamente
+            io.to(room.admin).emit('join request', { userId: socket.id, userName: userName });
+        } else {
+            socket.emit('join room failed', { message: 'Room does not exist.' });
+        }
+    });   
+
+    // Evento para aprovar ou rejeitar a entrada na sala
+    socket.on('respond join request', ({ roomId, userId, approve }) => {
+        const room = rooms.get(roomId);
+        if (room && socket.id === room.admin) {
+            const userSocket = io.sockets.sockets.get(userId);
+            if (userSocket) {
+                if (approve) {
+                    userSocket.join(roomId);
+                    userSocket.roomId = roomId;
+    
+                    // Atribua o nome do usuário do socket temporário armazenado
+                    const userName = userSocket.userName || 'Usuário Desconhecido';
+                    
+                    // Adicione o usuário à lista de usuários da sala
+                    room.users.push({ userId: userId, userName: userName });
+                    userSocket.emit('join room approved', { roomId: roomId, userName: userName });
+    
+                    io.to(roomId).emit('user joined', room.users, room.admin);
+                } else {
+                    io.to(userId).emit('join room rejected', { message: 'Your request to join the room was rejected.' });
+                }
+            }
+        }
+    });      
+    
 });
 
 server.listen(3000, () => {
