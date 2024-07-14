@@ -143,6 +143,8 @@ if (video) {
 }
 
 function createRoom() {
+
+    console.log(userList)
     
     socket.emit('create room', { roomId: roomId, userName: userName });
 
@@ -295,10 +297,13 @@ function requestJoinRoom() {
     roomId = roomIdJoinInput.value;
     userName = userNameJoinInput.value;
     socket.emit('request join room', { roomId: roomId, userName: userName });
+    // alert("Wait for admin aprove you...")
+    document.getElementById('log_request_to_join').textContent = 'Wait for admin aprove you...'
 }
 
 // Lidar com a aprovação da solicitação de entrada
 socket.on('join room approved', function(data) {
+    document.getElementById('log_request_to_join').textContent = ''
     roomId = data.roomId;
     userName = data.userName;
     console.log(`Nome do usuário aprovado: ${userName}`); // Log para verificar o nome

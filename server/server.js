@@ -8,6 +8,8 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+let room_users = [];
+
 // Conjunto para armazenar IDs de sala existentes
 let existingRooms = new Set();
 
@@ -133,19 +135,92 @@ io.on('connection', (socket) => {
             const room = rooms.get(socket.roomId);
             room.users = room.users.filter(user => user.userId !== socket.id);
             io.to(socket.roomId).emit('user left', room.users, room.admin);
+    
+            // Verificar se não há mais usuários na sala
+            if (room.users.length === 0) {
+                // Remover a sala da lista de salas (rooms)
+                rooms.delete(socket.roomId);
+                existingRooms.delete(socket.roomId);
+                // room_users.find(socket.roomId).then(room_users.pop(),error => console.log(error))
+                room.users.length = 0;
+                room_users.splice(room_users.findIndex(user => user.room_id === socket.roomId), 1);
+                // room.users = []
+                // room.users.pop();
+                console.log(`Sala ${socket.roomId} foi fechada.`);
+            }
+        }
+    });
+    
+    // socket.on('create room', ({ roomId, userName }) => {
+    //     // Verificar se a sala já existe na coleção rooms
+    //     if (!existingRooms.has(roomId)) {
+    //         // Se não existir, criar a sala com o usuário que está criando
+    //         existingRooms.add(roomId);
+    //         rooms.set(roomId, { users: [], videoHash: null, admin: socket.id });
+    //         socket.emit('room created', { roomId: roomId, userName: userName });
+    //         room_users.push({ name: userName, room_id: roomId });
+    //     } else {
+    //         // Verificar se a sala está vazia (sem usuários)
+    //         const room = rooms.get(roomId);
+    //         const roomUser = room_users.find(user => user.room_id === roomId);
+    
+    //         if (!roomUser) {
+    //             // Se a sala está vazia, adicionar o usuário que está criando a sala
+    //             existingRooms.add(roomId);
+    //             room.users.push({ id: socket.id, name: userName });
+    //             socket.emit('room created', { roomId: roomId, userName: userName });
+    //             room_users.push({ name: userName, room_id: roomId });
+    //         } else {
+    //             // Se houver usuários na sala, emitir falha na criação da sala
+    //             socket.emit('room creation failed', { message: 'A sala já existe e possui usuários. Por favor, escolha outro ID.' });
+    //         }
+    //     }
+    // });
+
+    socket.on('create room', ({ roomId, userName }) => {
+        // Verificar se a sala já existe na coleção rooms
+        if (!existingRooms.has(roomId)) {
+            // Se não existir, criar a sala com o usuário que está criando
+            existingRooms.add(roomId);
+            rooms.set(roomId, { users: [], videoHash: null, admin: socket.id });
+            socket.emit('room created', { roomId: roomId, userName: userName });
+            room_users.push({ name: userName, room_id: roomId });
+        } else {
+            // Verificar se a sala está vazia (sem usuários)
+            const room = rooms.get(roomId);
+            const roomUser = room_users.find(user => user.room_id === roomId);
+
+            console.log('else users: '+ room.users)
+            console.log('else users: '+ room.users.length)
+            console.log('else users: '+ room) // [Object Object]
+            console.log('else users: '+ room.user) // [Object Object]
+        
+            if (!roomUser) {
+                // Se a sala está vazia, adicionar o usuário que está criando a sala
+                existingRooms.add(roomId);
+                room.users.push({ id: socket.id, name: userName });
+                socket.emit('room created', { roomId: roomId, userName: userName });
+                room_users.push({ name: userName, room_id: roomId });
+            } else {
+                // debug
+                console.log(room.users.length)
+                console.log(room.users)
+                // Se houver usuários na sala, emitir falha na criação da sala
+                socket.emit('room creation failed', { message: 'A sala já existe e possui usuários. Por favor, escolha outro ID.' });
+            }
         }
     });
 
     // Evento para criar uma nova sala
-    socket.on('create room', ({ roomId, userName }) => {
-        if (existingRooms.has(roomId)) {
-            socket.emit('room creation failed', { message: 'ID da sala já existe. Por favor, escolha outro ID.' });
-        } else {
-            existingRooms.add(roomId);
-            rooms.set(roomId, { users: [], videoHash: null, admin: socket.id });
-            socket.emit('room created', { roomId: roomId, userName: userName });
-        }
-    });
+    // socket.on('create room', ({ roomId, userName }) => {
+    //     if (existingRooms.has(roomId)) {
+    //         socket.emit('room creation failed', { message: 'ID da sala já existe. Por favor, escolha outro ID.' });
+    //     } else {
+    //         existingRooms.add(roomId);
+    //         rooms.set(roomId, { users: [], videoHash: null, admin: socket.id });
+    //         socket.emit('room created', { roomId: roomId, userName: userName });
+    //     }
+    // });    
 
     socket.on('video sync', (data) => {
         console.log('Received video sync message:', data);
