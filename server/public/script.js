@@ -161,6 +161,7 @@ function createRoom() {
         document.getElementById('messages').style.display = 'block';
         document.getElementById('form').style.display = 'block';
         document.getElementById('userListContainer').style.display = 'block';
+        // document.getElementById('messages').innerHTML += `<p>Room ${roomId} created successfully by ${userName}.</p>`;
         socket.emit('join room', { roomId: roomId, userName: userName });
     });
 
@@ -270,19 +271,28 @@ socket.on('you are admin', function() {
 
 function updateUserList(users, adminId) {
     var userList = document.getElementById('userList');
+    let lastUserName = ''
     userList.innerHTML = '';
+    // userList.textContent = '';
     users.forEach(function(user) {
-        var item = document.createElement('li');
-        item.textContent = user.userName;
-        if (socket.id === adminId && user.userId !== socket.id) {
-            var removeButton = document.createElement('button');
-            removeButton.textContent = 'Remover';
-            removeButton.onclick = function() {
-                removeUser(user.userId);
-            };
-            item.appendChild(removeButton);
+        
+        if (user.userName == lastUserName)
+        {
+            console.log(`current name ${user.userName} is equal of last name ${lastUserName} `)
+        } else {
+            var item = document.createElement('li');
+            item.textContent = user.userName;
+            if (socket.id === adminId && user.userId !== socket.id) {
+                var removeButton = document.createElement('button');
+                removeButton.textContent = 'Remover';
+                removeButton.onclick = function() {
+                    removeUser(user.userId);
+                };
+                item.appendChild(removeButton);
+            }
+            userList.appendChild(item);
         }
-        userList.appendChild(item);
+        lastUserName = user.userName 
     });
 }
 
