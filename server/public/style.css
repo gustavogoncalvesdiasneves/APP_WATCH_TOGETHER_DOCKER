@@ -17,6 +17,69 @@ body {
     display: flex;
     flex-direction: row;
     width: 1000%;
+    max-height: 90%;
+}
+#donateIcon {
+    position: fixed;
+    /* position: relative; */
+    bottom: 20px;
+    right: 20px;
+    cursor: pointer;
+    z-index: 1000; /* Para garantir que fique acima do resto do conteúdo */
+    display: none;
+}
+#pop_up_donate.active {
+    display: block;
+}
+#pop_up_donate{
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #fff;
+    padding: 20px;
+    border: 1px solid #ccc;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    display: none;
+    /* width: 100%; */
+    align-items: center;
+    align-content: center;
+    text-align: center;
+}
+#donationClose {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    cursor: pointer;
+    width: 30px;
+}
+#donationContainer {
+    display: none;
+    position: relative;
+    margin-top: 20px;
+
+}
+
+#donationContainer button {
+    margin: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: left;
+    padding: 10px;
+    margin-bottom: 10px;
+
+}
+#donationContainer img {
+    margin-right: 10px;
+}
+
+#donationInfo {
+    background-color: #f9f9f9;
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-top: 20px;
 }
 #chat {
     margin: 0 1rem;
@@ -105,7 +168,7 @@ ul#messages {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     margin-bottom: 20px;
     display: none;
-    max-height: 80%;
+    max-height: 30%;
     min-height: 40vh;
     overflow-y: auto;
 }

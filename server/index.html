@@ -7,21 +7,45 @@
     
 </head>
 <body>
+
+    <div id="pop_up_donate">
+        <img id="donationClose" src="icons8-fechar-janela-100.png" alt="Fechar" onclick="closePopUpDonate()">
+        <div id="donationContainer">
+            <h2>Make a Donation</h2>
+            <!-- <button onclick="showDonationInfo('pix')">Donate via PIX</button> -->
+            <button onclick="showDonationInfo('btc')"><img src="icons8-btc,-bitcoin-cryptocurrency-electronic-cash-logotype-layout-96.png" alt="Donate" width="20">Donate via BTC</button>
+            <button onclick="showDonationInfo('eth')"><img src="icons8-ethereum-64.png" alt="Donate" width="20" >Donate via ETH</button>
+            <button onclick="showDonationInfo('bnb')"><img src="icons8-bnb-64.png" alt="Donate" width="20" >Donate via BNB</button>
+            <button onclick="showDonationInfo('usdt')"><img src="icons8-amarrar-48.png" alt="Donate" width="20" >Donate via USDT (BEP-20)</button>
+        </div>
+    
+        <div id="donationInfo" style="display: none;">
+            <h3>Information of Donate</h3>
+            <p id="donationDetails"></p>
+            <button onclick="hideDonationInfo()">Close</button>
+        </div>
+    </div>
+
+    <div id="donateIcon">
+        <img src="icons8-doar-64.png" alt="Donate" width="50" height="50" onclick="showPopUpDonate()">
+    </div>
+
     <div class="container">
+
         <div id="createRoom">
-            <h2>Criar Nova Sala</h2>
-            <label for="roomId">ID da Sala:</label>
+            <h2>Create New Room</h2>
+            <label for="roomId">ID of Room:</label>
             <input type="text" id="roomId" name="roomId"><br><br>
-            <label for="creatorName">Seu Nome:</label>
+            <label for="creatorName">Your Name:</label>
             <input type="text" id="creatorName" name="creatorName"><br><br>
-            <button onclick="createRoom()">Criar Sala</button>
+            <button onclick="createRoom()">Create Room</button>
         </div>
 
         <div id="joinRoom">
-            <h2>Entrar em uma Sala Existente</h2>
-            <label for="roomIdJoin">ID da Sala:</label>
+            <h2>Join an Existing Room</h2>
+            <label for="roomIdJoin">ID of Room:</label>
             <input type="text" id="roomIdJoin" name="roomIdJoin"><br><br>
-            <label for="userNameJoin">Seu Nome:</label>
+            <label for="userNameJoin">Your Name:</label>
             <input type="text" id="userNameJoin" name="userNameJoin"><br><br>
             <!-- <button onclick="joinRoom()">Entrar na Sala</button> -->
             <button onclick="requestJoinRoom()">Join Room</button>
@@ -29,7 +53,7 @@
         </div>
         
         <div id="videoContainer">
-            <button onclick="importIPFSVideo()">Importar Vídeo da IPFS</button>
+            <button onclick="importIPFSVideo()">Import Vídeo of IPFS</button>
             <video id="video" controls>
                 Your browser does not support the video tag.
             </video>
@@ -38,7 +62,7 @@
         <div id="chat">
 
             <div id="userListContainer" style="display: none;">
-                <h3>Usuários na Sala - <span id="roomIDDisplay"></span></h3>
+                <h3>Users in Room - <span id="roomIDDisplay"></span></h3>
                 <ul id="userList"></ul>
             </div>            
             
@@ -46,7 +70,7 @@
             <ul id="messages"></ul>
     
             <form id="form" action="">
-                <input id="input" autocomplete="off" placeholder="Digite sua mensagem..." /><button>Enviar</button>
+                <input id="input" autocomplete="off" placeholder="Type your message..." /><button>Send</button>
             </form>
         </div>
 

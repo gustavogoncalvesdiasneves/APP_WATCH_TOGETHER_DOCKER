@@ -13,6 +13,42 @@ var roomId;
 var userName;
 var lastSentTime = 0;
 
+function showPopUpDonate(){
+    document.getElementById('pop_up_donate').style.display = 'block';
+    document.getElementById('donationContainer').style.display = 'flex';
+    document.getElementById('donationContainer').style.flexDirection = 'column';
+}
+
+function showDonationInfo(method) {
+    const donationDetails = document.getElementById('donationDetails');
+    switch (method) {
+        case 'btc':
+            donationDetails.textContent = 'Address BTC: bc1qyn3lgy9equ6lw6dkjzaay4nrat8ffjzvvsf9m2';
+            break;
+        case 'eth':
+            donationDetails.textContent = 'Address ETH: 0xF2396dF3d9945826E7cfE9f796da26740A1E22FC';
+            break;
+        case 'bnb':
+            donationDetails.textContent = 'Address BNB (BNB Smart Chain): 0xF2396dF3d9945826E7cfE9f796da26740A1E22FC';
+            break;
+        case 'usdt':
+            donationDetails.textContent = 'Address USDT (BEP-20): 0xF2396dF3d9945826E7cfE9f796da26740A1E22FC';
+            break;
+        default:
+            donationDetails.textContent = '';
+            break;
+    }
+    document.getElementById('donationInfo').style.display = 'block';
+}
+
+function hideDonationInfo() {
+    document.getElementById('donationInfo').style.display = 'none';
+}
+
+function closePopUpDonate(){
+    document.getElementById('pop_up_donate').style.display = 'none';
+    document.getElementById('donationContainer').style.display = 'none';
+}
 
 function importVideo() {
     fileInput.click();
@@ -32,7 +68,7 @@ socket.on('video imported', ({ ipfsHash }) => {
             video.src = URL.createObjectURL(blob);
         })
         .catch(error => {
-            console.error('Erro ao importar vídeo da IPFS:', error.message);
+            console.error('Error importing video from IPFS:', error.message);
         });
 });
 
@@ -51,7 +87,7 @@ socket.on('current video', (ipfsHash) => {
                 video.src = URL.createObjectURL(blob);
             })
             .catch(error => {
-                console.error('Erro ao importar vídeo da IPFS:', error.message);
+                console.error('Error importing video from IPFS:', error.message);
             });
     }
 });
@@ -70,7 +106,7 @@ async function importIPFSVideo() {
             video.src = URL.createObjectURL(blob);
             socket.emit('video imported', { roomId: roomId, ipfsHash }); // Emite evento para todos na sala
         } catch (error) {
-            console.error('Erro ao importar vídeo da IPFS:', error.message);
+            console.error('Error importing video from IPFS:', error.message);
         }
     }
 }
@@ -149,7 +185,7 @@ function createRoom() {
     socket.emit('create room', { roomId: roomId, userName: userName });
 
     socket.on('room created', function(data) {
-        console.log('Sala criada:', data.roomId);
+        console.log('Room Created:', data.roomId);
         var roomIdInput = document.getElementById('roomId');
         var creatorNameInput = document.getElementById('creatorName');
         roomId = roomIdInput.value;
@@ -161,13 +197,14 @@ function createRoom() {
         document.getElementById('messages').style.display = 'block';
         document.getElementById('form').style.display = 'block';
         document.getElementById('userListContainer').style.display = 'block';
+        document.getElementById('donateIcon').style.display = 'block';
+        // document.getElementById('pop_up_donate').style.display = 'block';
         // document.getElementById('messages').innerHTML += `<p>Room ${roomId} created successfully by ${userName}.</p>`;
         socket.emit('join room', { roomId: roomId, userName: userName });
     });
 
     socket.on('room creation failed', function(data) {
         alert(data.message);
-        // Lógica para lidar com falha na criação da sala
     });
 }
 
@@ -183,6 +220,8 @@ function joinRoom() {
     document.getElementById('messages').style.display = 'block';
     document.getElementById('form').style.display = 'block';
     document.getElementById('userListContainer').style.display = 'block';
+    document.getElementById('donateIcon').style.display = 'block';
+    // document.getElementById('pop_up_donate').style.display = 'block';
     socket.emit('join room', { roomId: roomId, userName: userName });
 }
 
@@ -202,7 +241,7 @@ form.addEventListener('submit', function(e) {
 });
 
 socket.on('chat message', function(data) {
-    console.log('Received message:', data); // Adicionado para depuração
+    console.log('Received message:', data); 
     var item = document.createElement('li');
     item.textContent = data.userName + ": " + data.message;
     messages.appendChild(item);
@@ -210,8 +249,6 @@ socket.on('chat message', function(data) {
 });
 
 // Event listeners for video synchronization (play, pause, seek)
-// Implement as needed based on previous setup
-// Evento para receber mensagens de outros eventos do vídeo (play, pause, seek)
 socket.on('video sync', function(data) {
     console.log('Received video sync message:', data);
     var video = document.getElementById('video');
@@ -239,26 +276,25 @@ socket.on('user joined', function(users, adminId) {
     }
 });
 
-// Adicione um listener para o evento 'user left' no cliente
 socket.on('user left', function(users, adminId) {
-    // Atualize a lista de usuários e admin na interface
+    // Update the list of users and admin in the interface
     if (Array.isArray(users)) {
         updateUserList(users, adminId);
     } else {
         console.error('Received invalid users data:', users);
     }
 
-    // Verifique se o usuário atual foi removido
+    // Check if the current user has been removed
     const userLeft = users.find(user => user.userId === socket.id);
     if (!userLeft) {
-        isRemoved = true; // Marcar o usuário como removido
-        // Oculte elementos relacionados à sala
+        isRemoved = true; // Mark the user as removed
+        // Hide room-related elements
         document.getElementById('videoContainer').style.display = 'none';
         document.getElementById('messages').style.display = 'none';
         document.getElementById('form').style.display = 'none';
         document.getElementById('userListContainer').style.display = 'none';
 
-        // Exiba elementos para criar ou entrar em uma sala
+        // Display elements to create or join a room
         document.getElementById('createRoom').style.display = 'block';
         document.getElementById('joinRoom').style.display = 'block';
     }
@@ -311,12 +347,11 @@ function requestJoinRoom() {
     document.getElementById('log_request_to_join').textContent = 'Wait for admin aprove you...'
 }
 
-// Lidar com a aprovação da solicitação de entrada
 socket.on('join room approved', function(data) {
     document.getElementById('log_request_to_join').textContent = ''
     roomId = data.roomId;
     userName = data.userName;
-    console.log(`Nome do usuário aprovado: ${userName}`); // Log para verificar o nome
+    console.log(`Approved username: ${userName}`); 
     document.getElementById('roomIDDisplay').textContent = roomId;
     document.getElementById('createRoom').style.display = 'none';
     document.getElementById('joinRoom').style.display = 'none';

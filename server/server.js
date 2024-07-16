@@ -10,13 +10,13 @@ const io = new Server(server);
 
 let room_users = [];
 
-// Conjunto para armazenar IDs de sala existentes
+// Set for storing existing room IDs
 let existingRooms = new Set();
 
-// Configurar para servir arquivos estáticos
+// Configure to serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Definir o tipo de conteúdo para arquivos JavaScript
+// Set the content type for JavaScript files
 app.use((req, res, next) => {
     if (req.url.endsWith('.js')) {
         res.set('Content-Type', 'application/javascript');
@@ -28,7 +28,7 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
 
-// Função para importar vídeo da IPFS através do servidor
+// Function to import video from IPFS through the server
 async function importIPFSVideo(ipfsHash) {
     const url = `https://ipfs.infura.io/ipfs/${ipfsHash}`;
 
@@ -40,12 +40,12 @@ async function importIPFSVideo(ipfsHash) {
         const blob = await response.blob();
         return blob;
     } catch (error) {
-        console.error('Erro ao importar vídeo da IPFS:', error.message);
+        console.error('Error importing video from IPFS:', error.message);
         throw error;
     }
 }
 
-// Rota para importar vídeo da IPFS através do servidor
+// Route to import video from IPFS through the server
 app.get('/ipfs/:hash', async (req, res) => {
     const ipfsHash = req.params.hash;
     try {
@@ -53,18 +53,18 @@ app.get('/ipfs/:hash', async (req, res) => {
         res.writeHead(200, {
             'Content-Type': 'video/mp4'
         });
-        const stream = blob.stream ? blob.stream() : new ReadableStream(); // Garantir que seja um stream
-        stream.pipe(res); // Envie o stream do blob como resposta
+        const stream = blob.stream ? blob.stream() : new ReadableStream(); // Make sure it's a stream
+        stream.pipe(res); // Send the blob stream as a response
     } catch (error) {
         console.error('Erro ao importar vídeo da IPFS:', error.message);
         if (!res.headersSent) {
-            res.status(500).send('Erro ao importar vídeo da IPFS'); // Envie um status de erro se houver problema
+            res.status(500).send('Erro ao importar vídeo da IPFS'); // Send an error status if there is a problem
         }
     }
 });
 
-// Armazenamento temporário de informações da sala
-let rooms = new Map(); // Mapa para armazenar informações das salas
+// Temporary storage of room information
+let rooms = new Map(); // Map to store room information
 
 io.on('connection', (socket) => {
     console.log('a user connected');
@@ -81,7 +81,7 @@ io.on('connection', (socket) => {
 
         const room = rooms.get(roomId);
 
-        // Se ainda não houver um admin, designe o usuário atual como admin
+        // If there is not already an admin, designate the current user as admin
         if (!room.admin) {
             room.admin = socket.id;
             socket.emit('you are admin');
@@ -89,10 +89,10 @@ io.on('connection', (socket) => {
 
         room.users.push({ userId: socket.id, userName: userName });
 
-        // Envie o vídeo atual da sala para o usuário que acabou de se juntar
+        // Send the current room video to the user who just joined
         socket.emit('current video', room.videoHash);
 
-        io.to(roomId).emit('user joined', room.users, room.admin); // Envie também o admin para todos na sala
+        io.to(roomId).emit('user joined', room.users, room.admin); // Also send the admin to everyone in the room
     });
 
     socket.on('remove user', ({ roomId, userId }) => {
@@ -100,14 +100,13 @@ io.on('connection', (socket) => {
         if (room && socket.id === room.admin) {
             const userToRemove = room.users.find(user => user.userId === userId);
             if (userToRemove) {
-                // Emitir mensagem para o chat informando que o usuário foi removido
                 io.to(roomId).emit('chat message', {
                     userId: 'server',
                     userName: 'Server',
                     message: `${userToRemove.userName} was removed from this room (ID: ${roomId}).`
                 });
     
-                // Remover usuário da sala
+                // Remove user from room
                 io.sockets.sockets.get(userId).leave(roomId);
                 room.users = room.users.filter(user => user.userId !== userId);
                 io.to(roomId).emit('user left', room.users, room.admin);
@@ -118,14 +117,12 @@ io.on('connection', (socket) => {
     socket.on('chat message', ({ userId, message }) => {
         console.log(`Message from ${userId}: ${message}`);
     
-        // Verificar se o usuário ainda está na sala
+        // Check if the user is still in the room
         const room = rooms.get(socket.roomId);
         if (room && room.users.some(user => user.userId === userId)) {
-            // Propagar a mensagem para todos na sala
             io.to(socket.roomId).emit('chat message', { userId: userId, userName: socket.userName, message: message });
         } else {
             console.log(`User ${userId} tried to send a message but is no longer in room ${socket.roomId}`);
-            // Ou outra ação apropriada, como ignorar a mensagem ou enviar uma resposta de erro ao usuário
         }
     });
 
@@ -150,32 +147,6 @@ io.on('connection', (socket) => {
             }
         }
     });
-    
-    // socket.on('create room', ({ roomId, userName }) => {
-    //     // Verificar se a sala já existe na coleção rooms
-    //     if (!existingRooms.has(roomId)) {
-    //         // Se não existir, criar a sala com o usuário que está criando
-    //         existingRooms.add(roomId);
-    //         rooms.set(roomId, { users: [], videoHash: null, admin: socket.id });
-    //         socket.emit('room created', { roomId: roomId, userName: userName });
-    //         room_users.push({ name: userName, room_id: roomId });
-    //     } else {
-    //         // Verificar se a sala está vazia (sem usuários)
-    //         const room = rooms.get(roomId);
-    //         const roomUser = room_users.find(user => user.room_id === roomId);
-    
-    //         if (!roomUser) {
-    //             // Se a sala está vazia, adicionar o usuário que está criando a sala
-    //             existingRooms.add(roomId);
-    //             room.users.push({ id: socket.id, name: userName });
-    //             socket.emit('room created', { roomId: roomId, userName: userName });
-    //             room_users.push({ name: userName, room_id: roomId });
-    //         } else {
-    //             // Se houver usuários na sala, emitir falha na criação da sala
-    //             socket.emit('room creation failed', { message: 'A sala já existe e possui usuários. Por favor, escolha outro ID.' });
-    //         }
-    //     }
-    // });
 
     socket.on('create room', ({ roomId, userName }) => {
         // Verificar se a sala já existe na coleção rooms
@@ -211,17 +182,6 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Evento para criar uma nova sala
-    // socket.on('create room', ({ roomId, userName }) => {
-    //     if (existingRooms.has(roomId)) {
-    //         socket.emit('room creation failed', { message: 'ID da sala já existe. Por favor, escolha outro ID.' });
-    //     } else {
-    //         existingRooms.add(roomId);
-    //         rooms.set(roomId, { users: [], videoHash: null, admin: socket.id });
-    //         socket.emit('room created', { roomId: roomId, userName: userName });
-    //     }
-    // });    
-
     socket.on('video sync', (data) => {
         console.log('Received video sync message:', data);
         const room = rooms.get(socket.roomId);
@@ -242,11 +202,11 @@ io.on('connection', (socket) => {
             }
             io.to(roomId).emit('video imported', { ipfsHash });
         } catch (error) {
-            console.error('Erro ao importar vídeo da IPFS:', error.message);
+            console.error('Error importing video from IPFS:', error.message);
             io.to(roomId).emit('chat message', {
                 userId: 'server',
                 userName: 'Server',
-                message: `Não foi possível importar o vídeo da IPFS: ${error.message}. Certifique-se de que o IPFS está ligado.`
+                message: `Unable to import video from IPFS: ${error.message}. Make sure IPFS is turned on.`
             });
         }
     });
@@ -275,7 +235,7 @@ io.on('connection', (socket) => {
                     userSocket.roomId = roomId;
     
                     // Atribua o nome do usuário do socket temporário armazenado
-                    const userName = userSocket.userName || 'Usuário Desconhecido';
+                    const userName = userSocket.userName || 'Unknown User';
                     
                     // Adicione o usuário à lista de usuários da sala
                     room.users.push({ userId: userId, userName: userName });
