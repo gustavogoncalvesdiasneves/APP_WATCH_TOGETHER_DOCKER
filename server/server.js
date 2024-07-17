@@ -1,12 +1,32 @@
 const express = require('express');
+const os = require('os');
 const http = require('http');
 const { Server } = require("socket.io");
 const path = require('path'); 
 const fetch = require('node-fetch').default;
+const multer = require('multer');
+const upload = multer({ dest: 'uploads/' });
+const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
+
+// Function to get ip local
+function getLocalIPAddress() {
+    const interfaces = os.networkInterfaces();
+    for (const name of Object.keys(interfaces)) {
+        for (const iface of interfaces[name]) {
+            if ('IPv4' !== iface.family || iface.internal !== false) {
+                continue;
+            }
+            return iface.address;
+        }
+    }
+    return '127.0.0.1';
+}
+
+const localIP = getLocalIPAddress();
 
 let room_users = [];
 
@@ -27,6 +47,17 @@ app.use((req, res, next) => {
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
+
+// Rota para importar vídeo local
+app.post('/upload', upload.single('video'), (req, res) => {
+    const file = req.file;
+    if (!file) {
+        return res.status(400).send('No file uploaded.');
+    }
+    const filePath = path.join(__dirname, 'uploads', file.filename);
+    res.send({ filePath });
+});
+
 
 // Function to import video from IPFS through the server
 async function importIPFSVideo(ipfsHash) {
@@ -193,23 +224,41 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('video imported', async ({ roomId, ipfsHash }) => {
-        console.log(`Video imported in room ${roomId}: ${ipfsHash}`);
-        try {
-            const blob = await importIPFSVideo(ipfsHash);
-            if (rooms.has(roomId)) {
-                rooms.get(roomId).videoHash = ipfsHash;
+    socket.on('local video imported', ({ roomId, videoUrl }) => {
+        console.log(`Local video imported in room ${roomId}: ${videoUrl}`);
+        if (rooms.has(roomId)) {
+            rooms.get(roomId).videoUrl = videoUrl;
+        }
+        io.to(roomId).emit('local video imported', { videoUrl });
+    });
+    
+
+    socket.on('video imported', async ({ roomId, ipfsHash, localPath }) => {
+        if (ipfsHash) {
+            console.log(`Video imported in room ${roomId}: ${ipfsHash}`);
+            try {
+                const blob = await importIPFSVideo(ipfsHash);
+                if (rooms.has(roomId)) {
+                    rooms.get(roomId).videoHash = ipfsHash;
+                }
+                io.to(roomId).emit('video imported', { ipfsHash });
+            } catch (error) {
+                console.error('Error importing video from IPFS:', error.message);
+                io.to(roomId).emit('chat message', {
+                    userId: 'server',
+                    userName: 'Server',
+                    message: `Unable to import video from IPFS: ${error.message}. Make sure IPFS is turned on.`
+                });
             }
-            io.to(roomId).emit('video imported', { ipfsHash });
-        } catch (error) {
-            console.error('Error importing video from IPFS:', error.message);
-            io.to(roomId).emit('chat message', {
-                userId: 'server',
-                userName: 'Server',
-                message: `Unable to import video from IPFS: ${error.message}. Make sure IPFS is turned on.`
-            });
+        } else if (localPath) {
+            console.log(`Video imported in room ${roomId}: ${localPath}`);
+            if (rooms.has(roomId)) {
+                rooms.get(roomId).videoHash = localPath;
+            }
+            io.to(roomId).emit('video imported', { localPath });
         }
     });
+    
 
 
     // Evento para solicitar entrada na sala
@@ -252,5 +301,7 @@ io.on('connection', (socket) => {
 });
 
 server.listen(3000, () => {
-    console.log('listening on *:3000');
+    console.log(`Server is running. Access it at http://${localIP}:3000 (warning! this ip is from docker)`);
+    console.log(`Type in your Terminal Linux "ip addr" or "if config" on Windows in CMD "ip config"`);
+    // console.log('listening on *:3000');
 });

@@ -54,6 +54,8 @@
         
         <div id="videoContainer">
             <button onclick="importIPFSVideo()">Import Vídeo of IPFS</button>
+            <button onclick="importLocalVideo()">Importar Vídeo Local</button>
+            <input type="file" id="localVideoInput" accept="video/*" style="display: none;" onchange="loadLocalVideo(event)">
             <video id="video" controls>
                 Your browser does not support the video tag.
             </video>

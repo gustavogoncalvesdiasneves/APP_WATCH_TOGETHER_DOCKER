@@ -388,3 +388,33 @@ socket.on('join request', function(data) {
     item.appendChild(rejectButton);
     userList.appendChild(item);
 });
+
+function importLocalVideo() {
+    document.getElementById('localVideoInput').click();
+}
+
+function loadLocalVideo(event) {
+    var file = event.target.files[0];
+    var url = URL.createObjectURL(file);
+    video.src = url;
+    video.load();
+
+    // Enviar a URL do vídeo para todos na sala
+    socket.emit('local video imported', { roomId: roomId, videoUrl: url });
+
+    // Garantir que o vídeo seja reproduzido no celular
+    video.addEventListener('loadeddata', function() {
+        video.play();
+    }, { once: true });
+}
+
+socket.on('local video imported', ({ videoUrl }) => {
+    video.src = videoUrl;
+    video.load();
+
+    // Garantir que o vídeo seja reproduzido no celular
+    video.addEventListener('loadeddata', function() {
+        video.play();
+    }, { once: true });
+});
+
