@@ -83,11 +83,28 @@ systemctl --user start docker-desktop
 
 ## 🚀 Running the Application
 
-To start the application, run the following command:
+To start the application, run the following command. If you encounter a port allocation error, ensure you stop any existing Docker containers using port 3000 before running this command:
 
 ```sh
 docker run -p 3000:3000 my-socket-app
 ```
+
+If you see an error like:
+```
+docker: Error response from daemon: driver failed programming external connectivity on endpoint exciting_mayer (8cef6dfc2060df3cee4e7d1fbc3a32ea50c72b2621596faa1015522c756a5c96): Bind for 0.0.0.0:3000 failed: port is already allocated.
+```
+
+Stop the existing container using:
+```sh
+docker stop <container_id>
+```
+
+For find `<container_id>`:
+```sh
+docker ps
+```
+
+Then retry the `docker run` command.
 
 You should see a message indicating the server is running:
 
@@ -95,7 +112,7 @@ You should see a message indicating the server is running:
 Server is running. Access it at http://<your-ip>:3000
 ```
 
-Replace `<your-ip>` with your host machine's IP address. For example, if your IP address for examples is `192.168.1.71`, you can access the application at:
+Replace `<your-ip>` with your host machine's IP address. For example, if your IP address is `192.168.1.71`, you can access the application at:
 
 ```
 http://192.168.1.71:3000
