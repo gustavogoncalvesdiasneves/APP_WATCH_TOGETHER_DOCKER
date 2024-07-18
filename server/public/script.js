@@ -8,6 +8,8 @@ var userList = document.getElementById('userList');
 var isAdmin = false;
 var isRemoved = false;
 var adminNotification = document.getElementById('adminNotification');
+var fileInput = document.getElementById('fileInput');
+var uploadButton = document.getElementById('uploadButton');
 
 var roomId;
 var userName;
@@ -54,24 +56,6 @@ function importVideo() {
     fileInput.click();
 }
 
-// socket.on('video imported', ({ ipfsHash }) => {
-//     const url = `http://192.168.1.71:3000/ipfs/${ipfsHash}`;
-//     fetch(url)
-//         .then(response => {
-//             if (!response.ok) {
-//                 throw new Error('Failed to fetch IPFS video');
-//             }
-//             return response.blob();
-//         })
-//         .then(blob => {
-//             const video = document.getElementById('video');
-//             video.src = URL.createObjectURL(blob);
-//         })
-//         .catch(error => {
-//             console.error('Error importing video from IPFS:', error.message);
-//         });
-// });
-
 socket.on('current video', (ipfsHash) => {
     if (ipfsHash) {
         const url = `http://192.168.1.71:3000/ipfs/${ipfsHash}`;
@@ -93,7 +77,7 @@ socket.on('current video', (ipfsHash) => {
 });
 
 async function importIPFSVideo() {
-    const ipfsHash = prompt('Enter IPFS hash of the video:'); // Você pode ajustar para obter o hash de outra forma
+    const ipfsHash = prompt('Enter IPFS hash of the video:');
     if (ipfsHash) {
         const url = `http://192.168.1.71:3000/ipfs/${ipfsHash}`;
         try {
@@ -104,7 +88,7 @@ async function importIPFSVideo() {
             const blob = await response.blob();
             const video = document.getElementById('video');
             video.src = URL.createObjectURL(blob);
-            socket.emit('video imported', { roomId: roomId, ipfsHash }); // Emite evento para todos na sala
+            socket.emit('video imported', { roomId: roomId, ipfsHash }); // Sends event to everyone in the room
         } catch (error) {
             console.error('Error importing video from IPFS:', error.message);
         }
@@ -117,16 +101,16 @@ function loadVideo(event) {
     video.src = url;
     video.load();
 
-    // Enviar a URL do vídeo para todos na sala
+    // Send the video URL to everyone in the room
     socket.emit('video imported', { url: url });
 
-    // Garantir que o vídeo seja reproduzido no celular
+    // Ensure video plays on mobile
     video.addEventListener('loadeddata', function() {
         video.play();
     }, { once: true });
 }
 
-// Adicionar verificação antes de enviar comandos de vídeo
+// Add verification before sending video commands
 if (video) {
     video.addEventListener('play', function() {
         if (!isRemoved) {
@@ -154,7 +138,7 @@ if (video) {
         }
     });
 
-    // Receber mensagens de sincronização do servidor
+    // Receive server sync messages
     socket.on('video sync', function(data) {
         if (!isRemoved) {
             console.log('Received video sync message:', data);
@@ -362,12 +346,12 @@ socket.on('join room approved', function(data) {
 });
 
 
-// Lidar com a rejeição da solicitação de entrada
+// Handle input request rejection
 socket.on('join room rejected', function(data) {
     alert(data.message);
 });
 
-// Lidar com a solicitação de entrada recebida (admin)
+// Handle incoming input request (admin)
 socket.on('join request', function(data) {
     var item = document.createElement('li');
     item.textContent = data.userName + " wants to join the room.";
@@ -430,29 +414,31 @@ socket.on('video imported', ({ ipfsHash, localPath }) => {
         video.src = localPath;
     }
 });
-
-document.getElementById('uploadButton').addEventListener('click', function() {
-    const fileInput = document.getElementById('fileInput');
+  
+uploadButton.addEventListener('click', () => {
+    fileInput.click(); // When clicking the button, we also click on the hidden file entry
+  });
+  
+  fileInput.addEventListener('change', () => {
     const file = fileInput.files[0];
-
+    if (file) {
+      uploadFile(file);
+    }
+  });
+  
+  function uploadFile(file) {
     const formData = new FormData();
     formData.append('videoFile', file);
-
+  
     fetch('/upload', {
       method: 'POST',
       body: formData
     })
     .then(response => response.json())
     .then(data => {
-      console.log('Resposta do servidor:', data);
-
-      // Assumindo que o servidor retorna a URL do vídeo
-      const video = document.getElementById('video');
-      video.src = data.videoUrl;
+      console.log('Server response:', data);
     })
     .catch(error => {
-      console.error('Erro ao enviar ou processar o arquivo:', error);
-      alert('Erro ao enviar o arquivo.');
+      console.error('Error sending file:', error);
     });
-  });
-  
+  }
