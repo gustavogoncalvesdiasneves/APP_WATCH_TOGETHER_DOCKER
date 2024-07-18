@@ -367,6 +367,7 @@ button:hover {
 
     #chat {
         width: 100%;
+        margin: 3rem 0;
     }
 
     form#form {
@@ -375,7 +376,7 @@ button:hover {
     }
     
     ul#messages {
-        width: 100%;
+        width: 98%;
         max-width: 100%;
         min-height: 30vh;
     }
@@ -385,13 +386,23 @@ button:hover {
     }
     
     form#form input {
-        width: 100%;
+        width: 98%;
         max-width: 100%;
     }
     
     form#form button {
         width: 100%;
         max-width: 100%;
+    }
+
+    #userListContainer {
+        max-width: 100%;
+        width: 98%;
+        font-size: 3rem;
+    }
+
+    #donateIcon {
+        right: 8rem;
     }
 
 }
