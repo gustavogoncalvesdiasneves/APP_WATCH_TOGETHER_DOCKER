@@ -105,6 +105,9 @@ body {
 #userListContainer li {
     text-align: start;
 }
+#userListContainer button {
+    margin-left: 0.5rem;
+}
 #createRoom, #joinRoom {
     /* margin-bottom: 20px; */
     margin: 0.5rem 1rem;
@@ -399,6 +402,10 @@ button:hover {
         max-width: 100%;
         width: 98%;
         font-size: 3rem;
+    }
+
+    #userListContainer button {
+        width: 80%;
     }
 
     /* #donateIcon {
