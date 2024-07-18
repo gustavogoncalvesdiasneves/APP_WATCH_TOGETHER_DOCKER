@@ -54,23 +54,23 @@ function importVideo() {
     fileInput.click();
 }
 
-socket.on('video imported', ({ ipfsHash }) => {
-    const url = `http://192.168.1.71:3000/ipfs/${ipfsHash}`;
-    fetch(url)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Failed to fetch IPFS video');
-            }
-            return response.blob();
-        })
-        .then(blob => {
-            const video = document.getElementById('video');
-            video.src = URL.createObjectURL(blob);
-        })
-        .catch(error => {
-            console.error('Error importing video from IPFS:', error.message);
-        });
-});
+// socket.on('video imported', ({ ipfsHash }) => {
+//     const url = `http://192.168.1.71:3000/ipfs/${ipfsHash}`;
+//     fetch(url)
+//         .then(response => {
+//             if (!response.ok) {
+//                 throw new Error('Failed to fetch IPFS video');
+//             }
+//             return response.blob();
+//         })
+//         .then(blob => {
+//             const video = document.getElementById('video');
+//             video.src = URL.createObjectURL(blob);
+//         })
+//         .catch(error => {
+//             console.error('Error importing video from IPFS:', error.message);
+//         });
+// });
 
 socket.on('current video', (ipfsHash) => {
     if (ipfsHash) {
@@ -389,32 +389,70 @@ socket.on('join request', function(data) {
     userList.appendChild(item);
 });
 
-function importLocalVideo() {
-    document.getElementById('localVideoInput').click();
-}
-
-function loadLocalVideo(event) {
+function importLocalVideo(event) {
     var file = event.target.files[0];
-    var url = URL.createObjectURL(file);
-    video.src = url;
-    video.load();
+    var formData = new FormData();
+    formData.append('video', file);
 
-    // Enviar a URL do vídeo para todos na sala
-    socket.emit('local video imported', { roomId: roomId, videoUrl: url });
-
-    // Garantir que o vídeo seja reproduzido no celular
-    video.addEventListener('loadeddata', function() {
-        video.play();
-    }, { once: true });
+    fetch('/upload', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        var filePath = data.filePath;
+        video.src = filePath;
+        video.load();
+        socket.emit('video imported', { roomId: roomId, localPath: filePath });
+    })
+    .catch(error => {
+        console.error('Error uploading local video:', error.message);
+    });
 }
 
-socket.on('local video imported', ({ videoUrl }) => {
-    video.src = videoUrl;
-    video.load();
-
-    // Garantir que o vídeo seja reproduzido no celular
-    video.addEventListener('loadeddata', function() {
-        video.play();
-    }, { once: true });
+socket.on('video imported', ({ ipfsHash, localPath }) => {
+    if (ipfsHash) {
+        const url = `http://192.168.1.71:3000/ipfs/${ipfsHash}`;
+        fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch IPFS video');
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                video.src = URL.createObjectURL(blob);
+            })
+            .catch(error => {
+                console.error('Error importing video from IPFS:', error.message);
+            });
+    } else if (localPath) {
+        video.src = localPath;
+    }
 });
 
+document.getElementById('uploadButton').addEventListener('click', function() {
+    const fileInput = document.getElementById('fileInput');
+    const file = fileInput.files[0];
+
+    const formData = new FormData();
+    formData.append('videoFile', file);
+
+    fetch('/upload', {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+      console.log('Resposta do servidor:', data);
+
+      // Assumindo que o servidor retorna a URL do vídeo
+      const video = document.getElementById('video');
+      video.src = data.videoUrl;
+    })
+    .catch(error => {
+      console.error('Erro ao enviar ou processar o arquivo:', error);
+      alert('Erro ao enviar o arquivo.');
+    });
+  });
+  

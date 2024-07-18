@@ -5,12 +5,48 @@ const { Server } = require("socket.io");
 const path = require('path'); 
 const fetch = require('node-fetch').default;
 const multer = require('multer');
-const upload = multer({ dest: 'uploads/' });
+// const upload = multer({ dest: 'uploads/' });
 const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
+
+// Caminho para o diretório de uploads
+const uploadDir = path.join(__dirname, 'uploads');
+
+// Verifica se o diretório de uploads existe, caso contrário, cria-o
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
+
+// Configurar o multer para lidar com o upload de arquivos
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadDir); // diretório onde os arquivos serão armazenados
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.originalname); // manter o nome original do arquivo
+  }
+});
+
+const upload = multer({ storage: storage });
+
+app.post('/upload', upload.single('videoFile'), (req, res) => {
+    if (req.file) {
+      console.log('Arquivo recebido:', req.file);
+      console.log('Caminho do arquivo salvo:', req.file.path);
+      const videoUrl = `/uploads/${req.file.filename}`; // Construir a URL do vídeo
+      io.emit('video imported', { localPath: videoUrl }); // Envia a URL do vídeo para todos os usuários conectados
+      res.json({ message: 'Arquivo recebido com sucesso.', videoUrl: videoUrl });
+    } else {
+      console.error('Erro: Arquivo não recebido.');
+      res.status(400).json({ message: 'Erro: Arquivo não recebido.' });
+    }
+  });
+
+// Servir arquivos estáticos da pasta 'uploads'
+app.use('/uploads', express.static(uploadDir));
 
 // Function to get ip local
 function getLocalIPAddress() {
@@ -47,16 +83,7 @@ app.use((req, res, next) => {
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
-
-// Rota para importar vídeo local
-app.post('/upload', upload.single('video'), (req, res) => {
-    const file = req.file;
-    if (!file) {
-        return res.status(400).send('No file uploaded.');
-    }
-    const filePath = path.join(__dirname, 'uploads', file.filename);
-    res.send({ filePath });
-});
+  
 
 
 // Function to import video from IPFS through the server
@@ -231,7 +258,6 @@ io.on('connection', (socket) => {
         }
         io.to(roomId).emit('local video imported', { videoUrl });
     });
-    
 
     socket.on('video imported', async ({ roomId, ipfsHash, localPath }) => {
         if (ipfsHash) {
@@ -258,6 +284,33 @@ io.on('connection', (socket) => {
             io.to(roomId).emit('video imported', { localPath });
         }
     });
+    
+
+    // socket.on('video imported', async ({ roomId, ipfsHash, localPath }) => {
+    //     if (ipfsHash) {
+    //         console.log(`Video imported in room ${roomId}: ${ipfsHash}`);
+    //         try {
+    //             const blob = await importIPFSVideo(ipfsHash);
+    //             if (rooms.has(roomId)) {
+    //                 rooms.get(roomId).videoHash = ipfsHash;
+    //             }
+    //             io.to(roomId).emit('video imported', { ipfsHash });
+    //         } catch (error) {
+    //             console.error('Error importing video from IPFS:', error.message);
+    //             io.to(roomId).emit('chat message', {
+    //                 userId: 'server',
+    //                 userName: 'Server',
+    //                 message: `Unable to import video from IPFS: ${error.message}. Make sure IPFS is turned on.`
+    //             });
+    //         }
+    //     } else if (localPath) {
+    //         console.log(`Video imported in room ${roomId}: ${localPath}`);
+    //         if (rooms.has(roomId)) {
+    //             rooms.get(roomId).videoHash = localPath;
+    //         }
+    //         io.to(roomId).emit('video imported', { localPath });
+    //     }
+    // });
     
 
 
