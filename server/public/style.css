@@ -408,8 +408,8 @@ button:hover {
         width: 80%;
     }
 
-    /* #donateIcon {
-        right: 8rem;
-    } */
+    #donateIcon {
+        display: block;
+    }
 
 }
