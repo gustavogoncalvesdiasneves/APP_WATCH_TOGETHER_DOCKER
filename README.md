@@ -86,6 +86,7 @@ systemctl --user start docker-desktop
 To start the application, run the following command. If you encounter a port allocation error, ensure you stop any existing Docker containers using port 3000 before running this command:
 
 ```sh
+docker build -t my-socket-app .
 docker run -p 3000:3000 my-socket-app
 ```
 
